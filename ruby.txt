@@ -1,0 +1,155 @@
+●git
+・初期設定
+git config --global user.email "Your email"
+git config --global user.name "Your name"
+git config -l 	# 確認
+
+・作り方
+git init
+
+・コミット
+git status
+git checkout -- ファイル名
+git add .
+git commit -m ""
+
+・差分表示
+git diff  # addしてないものと最新の差分
+git diff --cached  # addしたものと最新の差分
+git diff HEAD	   # 手元と最新の差分
+
+・addしてないものを元に戻す
+git checkout -- ファイル名	# --は本来branch名だがそれを省略している。コミットIDでもよい
+git checkout branch名		# branchに移動
+
+・addしたものをやっぱりコミットしない
+git reset -- ファイル名
+
+・リモート
+git remote -v	# URL表示
+git fetch		# 最新を確認(ローカルに取得しない）
+git pull		# 最新を取得してマージ(fetch+merge)
+git push origin master	# ローカル(master)をリモート(origin)にアップロード	-n でdry-run
+
+・リモートに鍵設定されているかどうかを確認する
+$ ssh git@172.23.102.160
+Enter passphrase for key '/home/canon/.ssh/id_rsa': 
+git@172.23.102.160's password: 
+Welcome to GitLab, tomita!
+                          Connection to 172.23.102.160 closed.
+・削除/移動
+git rm/mv
+
+・直前のコメントを修正
+git commit --amend 
+
+・過去のコメントを修正
+git rebase -i HEAD~3
+修正したいリビジョンの"pick"を"edit"にして保存して終了
+git commit --amend -m "new comment"
+git rebase --continue
+
+・ログ
+git log -p	# diff も見れる
+git log --oneline	# 一行表示
+
+●●●●●
+●Rails ●
+●●●●●
+・動かし方
+git clone  http://172.23.102.160:3000/shiroiwa/tubulog.git
+bundle install	# installは省略してもよい
+rake db:migrate
+be rails s
+
+・作成
+	rails new hoge
+
+・javascriptファイルの場所
+	app/assets/javascripts
+・ルーティングの内容を確認
+	rake routes
+・部分テンプレート
+　共通の表示部分を_hoge.html.erbとしておいて、使用したい部分で
+	<%= render 'hoge' %>
+・バージョンの確認
+	rails -v
+・rails g などで、`autodetect’: Could not find a JavaScript runtime. がでたら、Gemfileに下記を追加
+gem 'execjs'
+gem 'therubyracer'
+
+
+・部分テンプレート
+<%= render @customer %>
+で_customer.html.erbにcustomerを渡せる
+
+
+●インストール
+http://qiita.com/items/8e973a544b592376a07e
+
+
+●ruby install
+$ rbenv install 1.9.3-p327
+
+
+# 1.9.3-p327に切り替え
+$ rbenv global 1.9.3-p327
+
+# システムのデフォルトrubyに戻す
+$ rbenv global system
+
+# 特定のディレクトリ以下のRubyバージョンを切り替え
+$ rbenv local 1.9.3-p327
+
+# ローカル設定を解除
+$ rbenv local --unset
+
+# インストールしたrubyやgemのパスを通す
+$ rbenv rehash
+
+# インストール済みのRuby一覧を見る
+$ rbenv versions
+
+
+●rails dbconsole
+
+sqlite> .tables
+mydbs              schema_migrations
+
+sqlite> .schema mydbs
+CREATE TABLE "mydbs" ("id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "myname" varchar(255), "mydate" date, "created_at" datetime NOT NULL, "updated_at" datetime NOT NULL);
+
+sqlite> select * from mydbs;
+1|birthday|1981-05-16|2013-05-02 07:10:11.682970|2013-05-02 07:10:11.682970
+2|1 year old|1982-05-16|2013-05-02 07:10:11.790578|2013-05-02 07:10:11.790578
+3|||2013-05-08 06:58:36.665873|2013-05-08 06:58:36.665873
+
+sqlite> .quit
+
+sqlite> delete from tweets;
+
+●ERBのコメント
+①<%# ...コメント... %>
+
+②<%=
+begin
+...コメント...
+=end
+%>
+
+③<% if false %>
+	・・・
+　<% end %>
+
+●jquery
+・rails 3.2からはデフォルトで入るようになったので、
+	rails generate jquery:install
+する必要ない
+
+・
+$(function(){
+  // 実行する命令
+});
+" $(document).ready(function(){" が省略されている。
+
+

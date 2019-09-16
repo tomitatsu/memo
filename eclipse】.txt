@@ -1,0 +1,206 @@
+
+【Eclipse】
+
+●矩形選択
+Shift+Alt+A
+
+●比較ビューのショートカットキー割り当て compare view
+General->Key->
+Select next change (Ctrl+.)
+Select previous change (Ctrl+,)
+Copy from Left to Right
+Copy from Right to Left
+
+●ビュー操作
+・ビューの切り替え：Ctrl+F7 
+・同一ビュー内でのタブの切り替え：Ctrl+E
+・違うビュー内も含めてタブの切り替え：Ctrl+F6
+・現在ビューの最大化：Ctrl+m
+
+
+●Diff（差分）で空白を無視する
+General->Compare(Patch)
+
+●workspace in use or cannot be created choose a different one
+rm workspace/.metadata/.lock
+
+●正規表現置換
+#include "(.+)"
+#include <$1>
+
+●ブレークポイント breakpoint
+・条件をつける
+　ブレークポイントの●を右クリックして「Breakpoint property」
+　Condition に無視したい変数名を記入
+
+●様子がおかしい（実行ボタンを押せない、等）とき
+①workspace/.metadataを（バックアップしてから）削除
+②eclipse/configurationを（バックアップしてから）config.ini以外削除
+
+●Profile Tool
+・Valgrind
+プロジェクト右クリ⇒Profiling Tool Configuration
+で、Valgrindでプロジェクトを作成、下記を選択
+	Memcheck メモリリーク
+	Cachegrind キャッシュヒット率
+	Massif ヒープメモリ使用量
+
+●QuickAccess
+Ctrl+3
+
+●outliine
+Ctrl+o
+キーボードだけでいけるので良い
+
+●Tabが日本語と英語でずれる
+一般 > 外観 > 色とフォント > 基本 > テキスト・フォント
+から、MonospaceをDejaVu LGC Sans Mono に変更
+
+●インストール
+・yum install java
+・サイトからEclipse+CDTをインストール
+・Linuxで展開するだけ。
+
+
+●CPPTest
+・インストール
+
+志村さんメールより
+
+
+> > TAF(,Perforce)のC++Test環境を7.2から7.3に更新しました。
+> > （問題なければ正式運用します。）
+> > 
+> > ローカルで確認される方は、
+> > C++Test7.3のインストール（ルールファイルアップデートも）
+> > タイトル：インストール手順
+> > http://cipweb10.cgn.canon.co.jp/redirect/?ID=notes://smdata03/492575CA0023613A/0/04AF29CDC51790894925764E002E5187
+> > を行ってください。
+
+これの、cpptest_7.3.***.shと、MISRA.zipだけを実行・展開します。
+
+・環境変数
+export LD_LIBRARY_PATH=/home/canon_ij/soft/engine/lib/std
+
+・実行
+./cpptest
+
+・ルールのインポート
+C++Test->TestConfiguration->User-definedで右クリ->Import->Notesにあるtachyon.propertiesを選択すると、[tachyon]ができる
+
+・ライセンスサーバの設定
+C++Test->Preference->Licencse
+・Start deactivatedにチェック
+・Use license serverにチェック
+・Host nameにsptlic01.ciu.canon.co.jp
+
+・解析
+Eclipseのプロジェクトに解析対象を作成
+対象を右クリ→C++Test→Test Using→User-Defined→tachyon
+解析が終わったら「Generate Report」ボタンでレポート作成
+
+　　・ライセンスサーバ設定
+　　・property設定（ユーザ定義→右クリック→インポート）
+     ライセンスサーバアドレス設定 
+	sptlic01.ciu.canon.co.jp(150.61.126.3) または 172.18.216.174 
+     ライセンスサーバ設定上の注意 
+	C++test＞テストコンフィギュレーション＞設定＞ライセンスにて、ライセンスサーバを設定します。 
+	プロフェッショナルエディション
+	C++test7.2、Linux Eclipse版では、C++test>設定>ライセンスにて設定可能 
+	起動時にライセンスを無効にする。 
+	ライセンスサーバを使う。 
+	エディションを「Professional」に選択する（通常）
+	・TCMは無効にしないと、PB-０５などが無視される。
+	・警告除外は
+	/* parasoft suppress item PB-29 */
+
+●Eclipse設定
+　　・プラグインを入れる(Window->Preference->General->Networkをproxy.canon.co.jp:10080に)
+    ・３．６の場合
+	「アクティブ・プロバイダー」を「手操作」に変更します。 
+	プロキシー・エントリーから該当のスキーマ（多くの場合は HTTP だと思う）を選んで、「編集」ボタンを押し、「プロキシー・エントリの編集」ダイアログを表示します。 
+	プロキシサーバのホスト名とポート番号を入力します。 
+	・自動設定は
+	http://pac-server.canon.co.jp/proxy.pac
+
+　　　・Perforce
+http://www.perforce.com/downloads/http/p4-wsad/install/
+        C++Test版eclipseではできないので、
+        下記に置いておきます。
+<file:\\canon.net\folder\本部フォルダ\ＰＦ開発本部\B-コントローラアーキテクチャ\30_設計開発資料\20_開発環境\Perforceノウハウ>
+
+　　　・シェルスクリプトエディタ(ShellEd)
+http://www.chasetechnology.co.uk/eclipse/updates 
+
+　　　・Subclipse
+    http://subclipse.tigris.org/update
+	http://subclipse.tigris.org/update_1.10.x
+	・syow only latest.. のチェックを外したり入れたりするとうまくいったりする
+
+      ・Eclox （doxygenエディタ）
+    http://download.gna.org/eclox/update
+
+//　　・New->Project->Perforceで設定項目を入力
+　　・インポート→チーム→Perforceで設定項目を入力
+　　・General
+    　  →Editor→TextEditor
+            →タブを空白に、行番号表示
+        →外観→色とフォント→C/C++と基本を10→９に
+　　    →Editor→FileAssosiate→*.idlをC/C++Editorに、*.shをMakefileに
+    ・C/C++→Editor
+        →RemoveWhiteSpace、Doxygenコメント、Folding、SyntaxColoring（StructとTypedef)、IndexAllFiles、CodeStyleでタブをSpaceOnlyに
+　　・eclipse.ini編集（メモリ量）
+--launcher.XXMaxPermSize
+512M
+-vmargs
+-Xms256m
+-Xmx512m
+
+
+
+Window→設定
+「一般」
+・行番号の表示
+・キー	コンテンツアシスト「Alt+/」->「Ctrl+@」
+	単語保管「Shift+Alt+/」->「Shift+Ctrl+/」
+・色とフォント	C/C++		→さざなみゴシック
+		テキストフォント→さざなみゴシック
+・ContetnTypes->Text->CSourceFileに*.idlを追加
+
+「C/C++」
+・構文の色の指定	クラス、構造体→青
+			型定義→紫
+・折りたたみ、#if#endif可能に。
+・コードスタイル→編集→タブポリシー「スペースのみ」
+
+「実行/デバッグ」
+・起動中→起動前にビルド外す
+
+【eclipse】
+［Ctrl］+［Atl］+［n］キーでクイックサーチ窓
+もしくは
+Shift+Ctrl+R
+
+Ctrl＋ divide	折りたたみ
+Ctrl＋Alt+↑		行コピー
+Ctrl＋D		行削除
+Ctrl+l		行番号ジャンプ
+Ctrl+H		検索
+Ctrl+Shift+F	フォーマット
+Ctrl+J		インクリメンタルサーチ
+Ctrl+F11　実行（F11：デバッグ実行）
+Ctrl+F6　Window間の移動
+Ctrl+Shift+P　対応するカッコにジャンプ
+Alt+Shift+W パッケージエクスプローラにジャンプ
+Ctrl+Tab	エディタの移動
+Ctrl+E		エディタ内のファイル切り替え
+Ctrl+M		エディタ最大化
+
+workspaceがひらけなくなったら
+/usr/local/eclipse/configuration/config.iniの，eof=eofの手前にosgi.locking=noneを記述する
+
+●ヘッダファイル(stdarg.hとか）のUnresolved Inclusion
+　strarg.hをfindで探して、そのパスをEclipseに追加する
+　プロジェクト→プロパティ→「C/C++一般」→「パスとシンボル」→「Include」→「GNU C」…「Include directories」
+
+　さらにその後、プロジェクト右クリ→Index->Rebuild でバグマークが消える

@@ -1,0 +1,1819 @@
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+★★★★★ Linux_コマンド系 ★★★★★★★★★★★★★★★★★★★
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+●自動シャットダウン
+cd /etc
+vi crontab
+# tomita added 2018.2.5
+0 18 * * 1-5 root /sbin/shutdown -h now
+30 8 * * 6,0 root /sbin/shutdown -h now
+
+30 22 * * * で毎日22:30にシャットダウンになります。
+
+Jul  5 14:17:24 localhost kernel: Kernel logging (proc) stopped.
+
+●Ubuntu インストール
+ vi /etc/profile
+MY_PROXY_URL="http://proxy.canon.co.jp:10080"
+HTTP_PROXY=$MY_PROXY_URL
+HTTPS_PROXY=$MY_PROXY_URL
+http_proxy=$MY_PROXY_URL
+https_proxy=$MY_PROXY_URL
+export HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
+ source /etc/profile
+
+ vi /etc/apt/apt.conf
+ Acquire::http::proxy "http://proxy.canon.co.jp:10080";
+ Acquire::https::proxy "http://proxy.canon.co.jp:10080";
+
+ sudo apt-get install git
+ sudo apt-get install screen
+ 
+root のパスワード
+sudo passwd root
+
+aptリポジトリのリスト
+/etc/apt/sources.list
+
+ファイルブラウザでツリー表示
+gsettings set org.gnome.nautilus.list-view use-tree-view true
+
+●CentOS7 インストール
+・初期インストール
+　・「最小限のインストール」ではなく、「開発およびクリエイティブワークステーション」
+　・ネットワークをONにしてNTP ON
+　・ホスト名をPC名にセット
+　・kdumpは無効化、「再起動」しない
+
+・ホームディレクトリのフォルダを日本語→英語に
+　LANG=C xdg-user-dirs-gtk-update
+・visudo
+  sai	ALL=(ALL)	NOPASSWD:ALL
+
+・SELinux無効化
+  sudo setenforce 0
+・iptables無効化(Cent7)
+  sudo systemctl stop firewalld.service
+  sudo systemctl stop iptables.service
+  sudo systemctl stop ip6tables.service
+  sudo systemctl disable firewalld.service
+  sudo systemctl disable iptables.service
+  sudo systemctl disable ip6tables.service
+・iptables無効化(Cent6)
+  sudo /etc/init.d/iptables stop 
+  sudo chkconfig iptables off
+  sudo chkconfig ip6tables off
+  
+・Proxy設定
+  sudo vi /etc/profile.d/proxy.sh
+  export http_proxy=http://proxy.canon.co.jp:10080
+  export https_proxy=https://proxy.canon.co.jp:10080
+・yum
+  sudo vi /etc/yum.conf
+  proxy=http://proxy.canon.co.jp:10080
+・VNC
+  sudo yum install tigervnc-server
+  vi .bashrc
+  alias vncs='vncserver :1 -geometry 1600x1200'
+  alias vnck='vncserver -kill :1'
+・yum
+  sudo yum update  
+
+●32bit環境 を 64bit環境に
+sudo yum install glibc.i686 libgcc.i686 glibc-devel.i686
+
+●ファイアウォール FireWall
+現在追加されているサービスの確認
+# firewall-cmd --list-services --zone=public
+
+サービスの追加（恒久的な設定とする場合）
+# firewall-cmd --add-service=https --zone=public --permanent
+# firewall-cmd --reload
+
+
+●HDD増設
+・ディスク確認
+ fdisk -l
+Disk /dev/sda: 1198.3 GB, 1198285389824 bytes, 2340401152 sectors
+
+Disk /dev/sdb: 1198.3 GB, 1198285389824 bytes, 2340401152 sectors
+
+Disk /dev/sdc: 1000.2 GB, 1000204886016 bytes, 1953525168 sectors
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sdc1   *          63    19535039     9767488+  83  Linux
+/dev/sdc2        19535040   117194174    48829567+  83  Linux
+
+　となっていたら、sdcだけマウントされており、sda, sdbは認識だけされている
+
+・fdisk
+fdisk /dev/sda
+Command (m for help): p 確認
+Command (m for help): n 作成
+Select (default p): p
+Partition number (1-4, default 1): 1
+Command (m for help): p
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sda1            2048  2340401151  1170199552   83  Linux
+Expert command (m for help): w 保存
+
+・フォーマット
+ mkfs.xfs /dev/sda1
+
+・マウント
+ sudo mkdir /mnt/sda
+ sudo mount /dev/sda1 /mnt/sda/
+ df -Th
+Filesystem                              Type      Size  Used Avail Use% Mounted on
+/dev/mapper/centos_s--2009--p32541-root xfs        50G  4.0G   47G   8% /
+devtmpfs                                devtmpfs   22G     0   22G   0% /dev
+tmpfs                                   tmpfs      22G  148K   22G   1% /dev/shm
+tmpfs                                   tmpfs      22G  9.3M   22G   1% /run
+tmpfs                                   tmpfs      22G     0   22G   0% /sys/fs/cgroup
+/dev/mapper/centos_s--2009--p32541-home xfs       161G  2.0G  159G   2% /home
+/dev/sdc12                              xfs       497M  120M  377M  25% /boot
+/dev/sdb1                               xfs       1.1T   33M  1.1T   1% /mnt/sdb
+/dev/sda1                               xfs       1.1T   33M  1.1T   1% /mnt/sda
+
+・自動マウント
+ sudo vi /etc/fstab
+/dev/sda1　/mnt/sda　　xfs　　　defaults 　　1　2
+1はファイルシステムをdumpする（０はしない）
+2はシステム起動時にfsckチェックを行う（１はルートファイルシステムでする）
+
+● sudo
+visudo
+
+記載内容：
+shiroiwa        ALL=(ALL)       ALL
+
+
+●コマンドライン引数に渡されたファイル名を処理するPerlスクリプトをループで実行
+find -iname "*.log" > k;  cat k | while read line; do ./checkPeak.pl $line | tee -a ka ; done
+
+●複数ファイル名を一括変換
+for nm in *.txt; do
+    mv $nm ${nm%.txt}.doc;
+done
+
+もしくは
+for f in apple*
+do
+    mv $f ${f/apple/orange}
+done
+
+●ライブラリのメモリ（ROM)サイズ
+size libslog.a
+   text	   data	    bss	    dec	    hex	filename
+   8492	      0	    152	   8644	   21c4	slog.o (ex src/libslog.a)
+text:プログラムコード
+data:初期値ありのグローバル変数
+bss:初期値なしのグローバル変数
+dec:合計（10進）
+hex:合計（16進）
+
+●TCPソケットがのconnect がEADDRNOTAVAILする
+　短期間にSocket のOpen/Closeが行われる場合、
+　設定によってTIME_WAIT 状態のソケットが大量に生成されてしまうため。
+
+　sudo sysctl -w net.ipv4.tcp_tw_reuse=1
+　http://qiita.com/kuni-nakaji/items/c07004c7d9e5bb683bc2
+
+●プロセスがシグナルを使っているか調べる
+/proc/PID/status
+http://mkosaki.blog46.fc2.com/blog-entry-206.html
+
+SigPnd: そのスレッドにpendingされている
+（配送されたけどまだ処理されていない）シグナル
+ShdPnd: プロセス指定で送られたシグナルでPendingされているもの
+SigBlk: sigprocmask で blocked にされているシグナル
+SigIgn: sigactionが SIG_IGN なもの
+SigCgt: sigactionが SIG_DFL 以外のもの
+
+●Dockerインストール
+・まずはepelをyumリポジトリに追加
+# wget http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+# rpm -ivh epel-release-6-8.noarch.rpm
+# yum repolist
+epel    Extra Packages for Enterprise Linux 6 - 
+
+・dockerインストール
+sudo yum install docker
+
+●
+http://svn.apache.org/repos/asf/subversion/trunk/contrib/client-side/svn_load_dirs/
+
+●pidからプロセス名取得
+FILE *fp;
+char procname[128];
+int pid = getpid();
+
+fp = popen("ps -p xxxxx -o comm=", "r");
+fgets(procname, sizeof(procname), fp);
+pclose(fp);
+
+ただし、映事などのbusybox使ってるとこではpsのオプション使えないため無理
+
+●y/nを受け付けるスクリプトに常にyを2個渡す
+echo -e "y\ny" | ./lcm.sh 
+
+●ハイフン
+cat -
+UNIXのシェルのコマンドラインでは、ハイフンひとつを標準入出力のことと読み替える習慣がある
+
+●シンボリックリンクがコピーできない（cp: cannot create symbolic link `': Operation not supported）
+cp -rL src/ dest/
+
+●終わったプロセスのPIDを取得
+./hoge &
+echo $!
+
+●nm
+U	シンボルなし
+T	シンボルあり
+-o でファイル名つき
+
+●標準出力と標準エラー出力をログファイルに混在するには、
+①プログラムでバッファをOFFする
+	プログラムの先頭で
+	setbuf(stdout,NULL);
+もしくは（stderrは通常バッファなしなのでsetbufする必要なし？）
+	printfしたあとにfflush(stdout)
+②コンソールでバッファをOFFする
+	http://www.gnu.org/software/coreutils/
+	からcoreutils-8.13.tar.gz  をダウンロードし、configure/make
+	src/stdbuf -o0 ./a.out 2>&1 | tee k
+	stdbuf は C:\share\softにも置いた
+
+
+●tmux
+・インストール
+yum install http://dl.fedoraproject.org/pub/epel/6/x86_64/tmux-1.6-3.el6.x86_64.rpm
+・接続（クライアント側）
+tmux
+・シェル移動（サーバ側）
+Ctrl+b p
+・Windowsに名前付け（サーバ側）
+Ctrl+b :rename-window hoge
+・デタッチ（サーバ側）
+Ctrl+b d
+・リスト表示（クライアント側）
+tmux list-sessions
+・アタッチ（クライアント側）
+tmux attach -t hoge
+・セッションの削除（クライアント側）
+tmux kill-session -t hoge
+
+●glibc のバージョン
+/lib/libc.so.6 
+
+●時刻設定
+sudo date --set="2014/6/18 10:30"
+
+●時刻フォーマット指定
+date "+%Y%m%d-%H%M%S"
+
+●自動起動ON
+ chkconfig sshd on
+ chkconfig --list で確認
+
+●Linuxドライバのビルド
+http://blog.goo.ne.jp/xmldtp/e/be2a36e8f53a4ff9b517ab0b803a65e5
+・コード作成
+・Makefile作成
+・sudo make -C /lib/modules/`uname -r`/build SUBDIRS=`pwd` modules
+・sudo /sbin/insmod hello.ko
+・/sbin/lsmod　や　dmesg で確認
+・sudo /sbin/rmmod hello.ko"
+
+
+
+●英語のman
+http://pubs.opengroup.org/onlinepubs/7908799/index.html
+
+●ソース
+http://ftp.gnu.org/gnu/libc/
+https://www.kernel.org/pub/linux/kernel/
+C:\Users\102341.CANON\Documents\linux
+
+●静的ライブラリから動的ライブラリを作る
+$ gcc -shared -o libtest.so --whole-archive libtest.a
+もしくは、
+$ ar x libtest.a
+で複数のオブジェクトファイルに展開した上で、
+$ ld -shared test1.o test2.o test3.o -o libtest.so
+
+
+●cmake
+・ビルド環境指定
+ cmake -G "Unix Makefiles"
+ # "Visual Studio 10"
+
+・ADD_SUBDIRECTORY と SUBDIRS は同じ？
+　①ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/core/src)
+　などとして自分の下位ディレクトリじゃないフォルダを指定するとエラーになる。
+　SUBDIRSならいける
+
+　②ADDされた側で定義した変数を上位で使うには、
+　　・上位でget_directory_propertyするか
+　　・下位でset (HOGE hoge PARENT_SCOPE) する必要があるが、
+　　その場合ADD_SUBDIRECTORYしないとダメ（SUBDIRSだとダメ）
+
+・CMake変数
+　・CMAKE_SOURCE_DIR
+　　PROJECTを定義しているCmakelistがあるDIR
+　・CMAKE_CURRENT_SOURCE_DIR
+　　現在実行されているCMakeLists.txtのあるディレクトリ。
+　・CMAKE_CURRENT_BINARY_DIR
+　　現在実行されているCMakeLists.txtから作られるファイルや実行可能ファイルが置かれるディレクトリ。
+　　# 簡単に言うと、Makefileでmakeするディレクトリ。
+
+●OS Type
+・Ubuntu
+　Debian系（apt-get)の先進版（安定版はDebian)
+・CentOS
+　RedHat系（yum)の安定版
+・Fedora
+　RedHat系（yum)の先進版
+
+●Ubuntuでは最初suパスワードがない？
+sudo su
+してからpasswdでrootパスワードを設定できる
+
+●スケジューラ優先度
+リアルタイム：0-99 自ら待つかより高い優先度のものがこないとプリエンプトしない
+ノンリアルタイム（NICE)：100-139 タイムスライスする。プロセスの種類（対話型かバッチか）によって動的に優先度が増減する（±５）
+						優先度が高いほど長時間タイムスライスを獲得する
+●svn コマンドなどで
+Could not resolve hostname
+と出たら、、、DNSが失敗している。
+（dig dpfsvn06.cgn.canon.co.jp としても、server can't find と出る）
+
+そしたら、rootで
+vi /etc/resolv.conf 
+して
+nameserver 150.61.227.17
+nameserver 150.61.109.1
+
+するといけた。
+
+●ロケール指定してコマンド実行
+LC_ALL=C make install
+
+●CPU消費させたいとき、負荷をかけたいとき
+yes >> /dev/null
+マルチコアの場合はコア数分ターミナルを立ち上げてyesする
+
+●valgrind
+・プロファイル
+valgrind --tool=callgrind ./hoge.exe
+
+・リークチェック（抑制つき）
+valgrind --leak-check=full --error-limit=no --show-reachable=yes --gen-suppressions=all --time-stamp=yes --suppresions=/home/canon_ij/val_suppress --log-file=nca_valgrind.txt /usr/local/canon_ij/bin/nca.exe
+
+・リークチェック（抑制なし）
+valgrind --leak-check=full --error-limit=no --show-reachable=yes --time-stamp=yes --log-file=valgrind.txt ./hoge.exe
+
+・ヒープ使用量チェック（--stacks=yes でスタック使用量も見れるが遅くなる）
+--tool=massif --time-stamp=yes --massif-out-file=valgrind_heap.txt
+ms_print valgrind_heap.txt > valgrind_heap_print.txt
+
+・インストール
+sudo yum install valgrind
+sudo yum install kdesdk		# kcachegrind
+
+●cut
+$ cut -f2- file1	 「file1」の2番目以降のフィールドを表示します。
+連続スペースを1つのスペースにまとめて処理するには、
+echo $line | sed 's/\s\{1,\}/ /g' | cut -d' ' -f1 
+
+●doxygen
+・defineへのリンクを貼りたいときは、(#define hoge (1)だったら）
+　#hoge （前後に空白必要）
+　関数だったら、
+　hoge() (前だけに空白必要)
+
+●
+echo -e "hoge\nhoge"
+で改行可能
+
+●時間計測
+下ほど精度高い。
+・clock()
+	ANSI C定義。POSIXではこれ(CLOCKS_PER_SEC)が1000000(1us)である亊を要求しています。
+	しかし、この精度があるというわけではなく、大抵はtick程度しか精度がでません。
+	なお、clockは実行中のプロセスの処理経過時間を返すため、APIのプロファイル等には便利です
+・time(), times()
+	精度はtick（4ms（最近のデフォルト）から10ms*2）に制限されてしまいます。WindowsでGetTickTimeを使っても同様
+・gettimeofday()
+	昔は、gettimeofday() もtick精度であったと記憶していますが、最近のLinuxでは、問題なくマイクロ秒の精度で時間を取得できるようです。
+	現在の時刻情報を取得
+・clockgettime(CLOCK_REALTIME,)
+	システムクロックの分解能で紀元からの経過時間を取得できます。
+	現在の時刻情報を取得
+・getrusage
+	POSIX系ならこれば一番無難でしょう。gettimeofday同様精度が高く、times、clockのようにプロセス単位の経過時間も取得できます。
+
+OpenJDK6では、下記のように実装している。
+　MONOTONIC_CLOCK をサポートしておれば、clock_gettime() を使う。
+　そうでなければ、gettimeofday() を使う。
+※tickとは
+	インターバルタイマコントローラ（CPU？）は非常に短い時間周期でハードウェア割り込み（インターバル割り込み）を繰り返し発行するハードウェアです
+	OSからするとラウンドロビンの周期。sleep()の起床の間隔でもある
+
+●PDF、PSファイルを開く
+evince ***.pdf
+
+●JDKのインストール
+yum search jdk
+yum install java-1.6.0-openjdk.i386
+
+●ファイルの改行コードを調べる
+od -c hoge.txt
+0000000   h   o   g   e  \r  \n
+0000006
+
+●特定のファイルを含むリストを作成する
+$ find . -type f -name "*.c" -o -name "*.h" -o -name "*.cpp" > src_list
+●リスト中の空白を"\ "に変換
+$ sed -e 's/ /\\ /g' src_list > list
+ 注）""とすると、\\はシェル展開されて\となりsedに伝わりうまく処理できないので注意
+●ディレクトリ名を抽出
+$ sed -e 
+●後方参照　「>NM000001」のようなパターンを「>NM_000001」に置換する例。
+sed 's/^>¥([A-Z]\{2\}¥)/\1_/g' multi.fa
+●リストから、フォルダリストを作成
+$ cat list | while read line in ; do echo ${line%/*} | sed -e 's/ /\\ /g' ; done > folder
+●フォルダを作成し、空のファイルを作成する
+$ cat folder | xargs mkdir -p ; cat list | xargs touch
+ 注）folderをユニークソートしておいてもいいかも
+●Cファイルのなかの関数の中身を抜き出す
+sed -n -e '/^int aipcScanNxp_CL::initCmipLayoutCL_/,/^}/p' ファイル名
+  -n で全非表示
+  /AAA/,/BBB/ で、AAAからBBBまで、
+  p で表示、を意味する
+
+●Makefile中のSource FileをSource\ Fileに
+find -iname "*akefile" | xargs sed -i 's/Source File/Source\\ File/g'
+
+●文字列削除
+fullpath=/a/b/c.txt
+　echo ${fullpath##*/}     # c.txt
+　echo ${fullpath%/*}      # /a/b
+　filename=d.e.txt
+　echo ${filename%.*}      # d.e
+　echo ${filename##*.}     # txt
+
+●svn
+svn クライアント1.8をインストール
+wget http://opensource.wandisco.com/RPM-GPG-KEY-WANdisco
+sudo rpm --import RPM-GPG-KEY-WANdisco 
+sudo yum install --enablerepo=wandisco-svn --disablerepo=base,updates,epel subversion
+
+・update時に下記のエラーが出たら、
+svn: Can't convert string from 'UTF-8' to native encoding:
+
+export LC_CTYPE=en_US.UTF-8
+してから再度トライ
+
+●wgetのproxy
+/etc/wgetrc」に以下の記述を追記します。
+http_proxy=http://proxy.canon.co.jp:10080/
+
+●rpmのproxy
+rpm --httpproxy proxy.mycompany.co.jp --httpport 8080 ～
+
+
+Linuxがアカウントを覚えてしまっていてそれを消したいとき
+rm -rf ~/.subversion/auth/svn.simple
+
+特定のファイル(Makefile)だけを取得
+SVN_REPO=https://・・・
+svn list -R $SVN_REPO | grep Makefile | while read line in;
+	do mkdir -p ${line%/*};
+	svn export $SVN_REPO/$line $line;
+done
+
+ディレクトリだけ取得
+SVN_REPO=https://・・・
+svn list -R $SVN_REPO | while read line in;
+	do mkdir -p ${line%/*};
+done
+
+必要なディレクトリだけCO
+svn co --depth empty http://svn/oreno/trunk .
+svn up --set-depth infinity ./hoshii
+
+外部参照
+svn propget svn:externals .
+svn propset svn:externals "https://.../trunk/hoge hoge" .
+　カレントに、hogeというディレクトリができ、その下はhoge/以下と同じになる
+下記の hoge.cfg を作成し、
+　https://.../trunk/hoge hoge
+　https://.../trunk/foo foo
+svn propset svn:externals -F hoge.cfg .
+　すると、複数ディレクトリを参照できる
+svn pe svn:externals "."
+	するとエディタが開くのでそれでも編集可
+svn propdel svn:externals .
+	で削除できるが、propsetをやれば普通に上書きできる
+Tagを作成したら、externalsしているところを、
+svn propset svn:externals "https://.../tags/hoge hoge" .
+することを忘れないように！でないとTag取得時に最新を取得してしまう
+
+・ローカルの変更をなくす
+svn revert ./* -R
+
+・ローカルにtrunkを作る
+svnadmin create myrepo
+svn export https://dpfsvn06.cgn.canon.co.jp/sai/sai/svn/trunk ./trunk
+svn import trunk file:///home/sai/svn/myrepo -m "add trunk"
+svn checkout file:///home/sai/svn/myrepo ./work
+cd work
+mkdir tags
+svn checkout -m "create tags"
+
+●File too largeといって実行できなかった場合は、
+./hoge
+↓
+bash hoge
+
+●Gnome日本語化
+System->Administration→Language
+
+●BIOSバージョン
+/usr/sbin/dmidecode
+●tcsh範囲指定
+foreach k ( `seq 100 123` )
+●サムネイル表示ができるエクスプローラー
+gthumb
+
+●全ディスク情報(dev/sda**)
+/sbin/parted -l
+/sbin/fdisk -l
+●ルートパーティション変更(Ex. sda7 -> sda3)
+/sbin/e2label /dev/sda7 /hoge
+/sbin/e2label /dev/sda3 /
+
+●/usr/local/bin/netperf -H172.23.16.58
+●1s間隔で繰り返し
+rm k
+while true; do
+ date >> k ; netstat -npa | grep nca.exe >> k
+ sleep 1
+done
+
+●TRUEとFALSE
+#define FALSE 0
+#define TRUE 1
+
+●sudoの追加
+rootで
+/usr/sbin/visudo
+canon_ij ALL=(ALL)       NOPASSWD: /sbin/shutdown
+
+●meldインストール
+・meldインストール
+　・http://blue-red.ddo.jp/~ao/wiki/wiki.cgi?page=Linux+%A4%C7+Meld+%A4%F2%A5%A4%A5%F3%A5%B9%A5%C8%A1%BC%A5%EB%A4%B9%A4%EB
+
+●zipの作成
+zip -r output.zip target
+unzip hoge.zip
+
+●～.tar.bz2, ～.tbzの解凍
+bzip2 -dc filename | tar xvf -
+もしくは
+tar xvjf *.tar.bz2
+
+●xhost
+[システム]->[管理]->[ログイン画面]->[セキュリティ]にて、 
+「TCP接続を禁止する」のチェックを外して再起動してみました。 
+root# export DISPLAY=:0.0　←これがミソだった 
+root# xhost + 
+
+●telnet抜ける方法
+「^」+「Ctrl+]」
+で、telnet> quit
+
+●シンボリックリンクも（本物を）コピー
+tar cvzfh hoge.tga hoge
+
+●可変長マクロ
+#define ESRI_ERR_SYSLOG(jobId, fmt, args...) \
+				( ocSyslog(RIPL_GID, ocLog_ERR, 	"jobId="JOBID_FIELD_LEN",Error!! "fmt"\n", 		(jobId), ##args) )
+
+●bashでfor文
+for a in *.txt; do ./logAnalyzer.pl -v -t 6 -s 20 $a > $a.html ; done
+for a in $(seq 1 5)
+
+●ライブラリをディスアセンブル
+objdump -d libSoftBUS.so (命令セクションのみ）
+objdump -D libSoftBUS.so (全セクション）
+
+●実行ファイル、オブジェクトに含まれる関数のスタックサイズを計測
+objdump -d nca.exe | perl /usr/src/kernels/2.6.18-128.el5-i686/scripts/checkstack.pl
+●スレッドのスタックサイズとアドレスを調べる
+#include <pthread.h>
+void Task( void *arg  )
+{
+    pthread_attr_t attr;
+    void*  stack_base = 0;
+    size_t stack_size = 0;
+	
+	if( pthread_getattr_np(pthread_self(), &attr) ){
+	  fprintf(stderr, "Failed pthread_getattr_np().\n" );
+	  fflush(stderr);
+	}
+	pthread_attr_getstack(&attr, &stack_base, &stack_size); 
+	printf("tomi: addr=%p, size=%d\n", stack_base, stack_size);
+	fflush(stdout);
+}
+
+●OOMKillerに殺されない方法(kernel 2.6.11 ikoudeyuukou)
+# echo -17 > /proc/プロセスID/oom_adj 
+
+●ゴミ箱表示
+１．システム→設定→他の個人設定→システムツール→設定エディタを有効にする（？Centだとなかった。。）
+２．アプリケーション→システムツール→設定エディタ→app/nautilus/desktopのゴミ箱を有効にする
+
+●プロセスの使用するディスクリプタをみる
+ls -l /proc/`pgrep nca.exe`/fd
+●ファイルディスクリプタの制限
+・システム
+less /proc/sys/fs/file-max
+・ユーザ
+csh:limit
+bash:ulimit -n
+・プログラム
+	    struct rlimit rl;
+	    getrlimit(RLIMIT_NOFILE,&rl);
+	    printf("tomi: cur=%d, max=%d\n", rl.rlim_cur, rl.rlim_max);
+	    rl.rlim_cur = 65535; /* change it to 1024 - note has to be < than rl.rlim_max */ setrlimit(RLIMIT_NOFILE,&rl); 
+	    ret = setrlimit(RLIMIT_NOFILE, &rl);
+（ただし、rlim_maxより小さい値しか（ルートでないと）設定できない)
+
+
+
+●ビープ音
+①xset -b
+②tcsh ; set nobeep
+③/etc/.inputrcを
+set prefer-visible-bell 
+
+●リダイレクト上書き
+(csh) >!
+(bsh) >|
+●コマンド履歴
+Ctrl+r
+●環境変数設定
+# setenv PATH /home/***:$PATH
+●標準入出力をフック
+expect
+●rpmインストール
+rpm -ivh (--nodeps) ***.rpm
+●文字コード変更
+・iconv
+iconv -f <元のエンコーディング> -t <変換後のエンコーディング> <ファイルA> -o ファイルB
+	http://note.kurodigi.com/linux-charconv/
+元のエンコーディングはfileで調べる
+	文字コード	findコマンドでの表示
+	EUC	ISO-8859 text
+	Shift-JIS	Non-ISO extended-ASCII text
+	JIS	ASCII text
+	UTF-8	UTF-8 text
+
+・nkf
+　CR付加(Win) -c
+　CR削除(Linux) -d
+　UTF-8に -w
+  文字コードを調べる -g
+
+●カーネルメッセージを見る
+・dmesg
+●ssh 先のXを使うとき
+ssh *** -X
+●ssh のデバッグ
+ssh -vvv
+●ssh でhas changed and you have requested strict checking.と出たら
+vi ~/.ssh/known_hosts
+対象の行を削除
+●ssh, scp でパスワード要求されないようにする
+クライアントで
+ssh-keygen -t rsa
+ssh-copy-id -i ~/.ssh/id_rsa.pub <user name>@<サーバのip address>
+https://qiita.com/hnishi/items/5dec4c7fca9b5121430f
+
+ssh-copy-idが無い場合は、ホストの~/.ssh/authorized_keys にid_rsa.pubの内容を直接コピペすればよい
+
+●標準出力にもファイルにも
+ ./***.exe 2>&1 | tee file.txt(sh・bash の場合)
+ ./***.exe |& tee file.txt(csh・tcsh の場合)
+ ファイルに追加書き込みする場合は
+ tee -a file.txt
+
+●標準出力と標準エラー出力をまとめて file に書き出す場合は
+% command >file 2>&1　（bash)
+% command &> file	  (bash)
+% command >& file.txt (tcsh)
+
+●ファイル間の行単位の比較
+　・Aにしかないもの
+    comm A B -23
+　・Bにしかないもの
+    comm A B -13
+　・両方にあるもの
+    comm A B -12
+
+●screen
+「死なないshell」のようなもの（実際にはscreenコマンドはターミナルエミュレーションソフト）を作り出し、このshellをサーバ上で動かし続けることでいったんログアウトした後で改めてscreenに再接続することができます。
+・セッションのアタッチ（マルチディスプレーモード）
+screenコマンドが非常に便利なのは、複数の人間が同じターミナルを共有できることにあります。 ただし、同じアカウント（uid）でログインする必要がありますのでご注意ください。 マルチディスプレーモードへの接続は引数に【-x】を利用します。
+$ screen -x
+コマンドの実行や、実行結果の出力などを共有することができます。遠隔地からサポートを受ける時など非常に便利です。複数のscreenセッションが存在する場合には【-r】での接続と同様にscreenのIDを引数に続けて入力します。
+・セッションの移動
+CTRL +j
+
+●screenコマンドについて
+・screenとやると、セッションが１つ増える（プロセスが一つ増える）
+・Ctrl-a cでセッション内に複数のウインドウを作れる（やはり子プロセスが一つ増える）
+・Ctrl-a Sで新たなリージョン（画面）の作成
+・Ctrl-a tabでリージョンに移動し、Ctrl-a cでウインドウを作る
+・Ctrl-a Qで今のリージョン以外すべて消す。Ctrl-a Xで今のリージョン消す
+・Ctrl-a : でコマンドモードでresizeとし、= とするとすべてのリージョンのサイズが同じになる
+・アタッチ(screen -r PID)、デタッチ(-d PID)とはセッションへの動作
+・アタッチされているセッションにアタッチすることはできない(-d -r PIDとして強制することは可能）
+・デタッチ Ctrl-a d
+・異なるリージョンから同じウインドウにアクセスすることはできる（コマンドは両方に表示される）
+・ウインドウ切り替え
+　Ctrl-a n
+    Ctrl-a Ctrl-aで直前のウインドウに
+    Ctrl-a "でリスト表示
+・ウインドウ閉じる
+    exit, Ctrl-D
+・セッション削除
+　kill PID
+・ウインドウ間でコピー
+　Ctrl-a [ でコピーモードへ、space で範囲選択、Ctrl-a ] でペースト
+・リージョン削除（ただしそのリージョンのウインドウは消えない）
+　Ctrl-a X
+・Ctrl-a x とやると、screen ロックされてしまうので注意！passwordを入れれば戻るらしいが、dockerコンテナだとrootパスワードが設定されてないらしく、抜けられない。。そうなったらコンテナ再起動（screen セッションは全部消える）しかない）
+・Ctrl-aではなくCtrl-tにするには.screenrcを生成し、escape ^t^t
+・今のセッションに名前をつけるCtrl-t : でコマンドモードにして、sessionname セッション名
+
+"●Windowが3個あるScreenにアタッチしてリージョンを３つつくる方法
+screen -R
+Ctrl-t S
+Ctrl-t S
+Ctrl-t tab
+Ctrl-t n
+Ctrl-t tab
+Ctrl-t n
+"
+
+●umountに失敗したら
+umount -l ディレクトリ
+
+●端末画面のスクロール †
+Shift + PageDown や Shift + PageUp で端末画面のページ単位スクロールができる
+
+●cd -
+で１つ前のディレクトリに戻れる。
+
+●更新されつづけるファイルを見る
+ tail -f ファイル名
+●システム起動時自動マウント
+/etc/fstab 
+●cygwinのldd
+cygcheck ./***.exe
+●cygwinの文字コード
+ShiftJIS ＋ LF
+●cygwinでtree
+cmd でコマンドプロンプトにすればtreeが使える
+●cygwinでjarの解凍
+C:\Program Files\Java\jdk1.7.0_13\bin\jar.exe *.jar xvf
+
+●XWin.exe -query 172.23.93.216
+
+●smbclient
+　Win側で共有設定しておく(ex.C:\test)
+　smbclient //S-2006-P05988/test -U 102341(Win側のユーザ）
+  Password:例の
+  smb: get k.txt ./a.txt
+●smbmount
+ smbmount //172.16.50.4(Winアドレス）/Share /mnt/win/ -o username=tachyon,password=XXX
+
+●シンボリックを含めたディレクトリのコピー
+cp -RP
+●ファイルシステムを表示
+df -T .
+
+●指定されたブロックサイズでofに書き込む
+dd if=file of=file
+●mqのサイズ変更
+cat 126 > /proc/sys/fs/mqueue/msg_max
+●mqの状態
+mkdir /dev/myq
+mount -t mqueue none /dev/myq/
+cd /dev/myq/
+find . -exec grep -a -H -v QSIZE:0 {} \;
+
+●キーボードをjp106に
+loadkeys jp106 //us
+ただしそれでもうまくいかないときは、
+System->Administration->Keyboard で「Japanese」を選択（既に選択されていても、「OK」を押すと改善される）
+
+●less
+末尾から検索：?
+次のヒット:N
+末尾へ移動:G
+行番号表示：-N
+
+●vi(vim)
+・行番号表示：set number
+・ZZ ファイルを保存してから終了します。:wqと同じ動作です。 
+　ZQ ファイルを保存しないで終了します。:q!と同じ動作です。 
+　wq! ファイルを保存してから終了します。!を付けると読み取り専用でも強制的に保存して終了させることができます 
+・置換
+　:%s/src/dst/g
+　:%s;/var/home;/home;gc(パス名）
+・redo   Ctrl+r
+　:redo
+・範囲選択 v
+・カット d
+・コピー y
+・貼りつけ p
+w	1単語分前へ移動
+b	1単語分後ろへ移動
+D 以降削除
+・先頭 0
+・末尾 $
+・PageDown(Up) Ctrl+D (U)
+・viを起動して以下のキーを入力すればタブ幅が変更されます。
+　:set tabstop=タブ幅
+もしくは、
+ホームディレクトリに.vimrcファイルを作成し
+　set tabstop=4
+・すべて選択
+　1G v G $
+「1G」で最初の行へ移動し「v」でヴィジュアルモードへ入り「G」で最終行へ移動し「$」で最終行の末尾へ移動
+・複数ファイル編集時に次のファイル編集
+ :n （保存して次は:wq)
+ 
+ 
+●find
+find を利用してファイルまたはディレクトリだけにして、chmod するという手法。
+ファイルの場合
+find . -type f -print | xargs chmod 644
+ディレクトリの場合
+find . -type d -print | xargs chmod 755
+
+orでfind
+find . \( -name \*.c -o -name \*.cc -o -name \*.h -o -name \*.hh \)
+
+・今の階層のディレクトリのサイズ
+find . -maxdepth 1 exec du -s -m {} \;
+find . -maxdepth 1 | xargs du -s -m
+・カレントにある各ディレクトリのサイズ
+du -m --max-depth=1
+
+・空白を含むファイル名を扱いたいとき（ヌル文字単位で考える）
+find . -name "*" -print0 | xargs -0 rm
+・sbusディレクトリの中の*.cファイルの行数
+find "*.c" `find . -type d -iname "sbus"` | xargs wc -l
+・検索したファイルを移動する
+find . -name \*~ -print0 | xargs -0 mv -t /var/tmp
+・シンボリックリンクも検索
+find -L
+・特定の名前のディレクトリは無視
+find . -name .git -prune -o -name hoge
+-o は左を実行して正のときのみ右を実行
+
+●``とexecとxargsの違い
+$ rm `find . -name \*~`
+しかし、これではヒットするファイル数が多すぎる場合に、下記のようなエラーを出して停止することがあります。
+
+$ find . -name \*~ -exec rm {} \;
+ただ、これだと100000ファイルがヒットした場合にrmコマンドが100000回実行されてしまうため、全部実行するまでに案外時間がかかる
+
+$ find . -name \*~ | xargs rm
+xargsを使った場合に上の2つの例とどう違うかというと、コマンド実行時の引数の制限を気にしつつ、rmにギリギリの個数のファイル名を渡して
+
+●今のディレクトリ名
+basename `pwd`
+
+●プロセスへの制限を設定（coreダンプ非生成などを設定可能）
+% limit coredumpsize unlimited
+$ ulimit -c unlimited
+●ファイル生成可能数の変更
+1. /etc/security/limits.confの編集
+次の2行を加えてください。
+username hard nofile 65536
+username hard nproc 16384
+
+2. /etc/pam.d/loginと/etc/pam.d/xdmを確認
+無い場合は追加してください。
+session required pam_limits.so
+ 
+3. 確認
+% limit descriptors 21000 #tcsh
+$ ulimit -n 21000　　#bash
+
+●モジュールのロード
+insmod, modprobe(依存関係を考慮）
+
+●●●● Make ●●●●
+・make 出力だけして実行しない
+ make -n
+・Makeやりなおし
+　!make
+・ソースパスの指定
+ vpath = hoge foo
+ vpath %.c src foo
+ または
+ vpath = hoge:foo
+
+・コマンドエラーを無視する（|| true が無いとMakeが途中で失敗する）
+ cat hoge | grep "include" || true
+
+●global (http generator)
+
+●ライブラリの依存
+readelf -d
+●シンボルテーブルの確認
+readelf -s lib***.so
+
+●useradd -d /home/usr01 -m -g grp01 usr01
+  ユーザーアカウント「usr01」を追加します。  
+　　ホームディレクトリ(自動作成)「/home/usr01」、
+　　グループ「grp01」を指定します。  
+●chown -R user dir
+
+●useradd、groupaddがない場合
+①su - してみる
+②/usr/sbin/にあるので、
+rootでchmod a+w /usr/sbin/groupadd
+
+●CentでVNC
+1.vinoを使う
+ System->Preferenceから
+
+2.手動でVNCサーバを起動する
+ yum install vnc-server
+・起動
+  FireWallをきっておく（ポート5900を開けておく、でもよい）
+　vncserver　-geometry 1800x900
+　WIN側でreadlvncを起動して、
+　172.23.16.66:1などとする
+・GNOMEにするには、~/.vnc/xtartupのtwm行をコメントアウトし、
+　exec gnome-session &
+　という一行を入れればよい。
+・終了
+　vncserver -kill :1
+●NFS
+お手元の Linux にて、 /etc/auto.misc に
+ccon -fstype=nfs,rw 172.23.16.80:/
+という行を追加し、 # /etc/init.d/autofs restart しますと、
+ls /misc/ccon とすると評価マシンのファイルシステムがマウントされます。
+
+・もしくは、
+  サーバ
+sudo yum install rpcbind nfs
+/etc/rc.d/init.d/rpcbind start
+yum -y install nfs-utils
+/etc/rc.d/init.d/nfs start
+　両方
+sudo /etc/init.d/iptables stop
+sudo chkconfig iptables off
+chkconfig --list iptables 
+　クライアント
+　sudo mount -t nfs 172.23.103.186:/home/sai/workspace/sbusx_unix_domain /mnt/export
+
+
+ 
+●マウントされたデバイスを現在
+使用中のプロセスやユーザー名を確認することができます。
+# fuser -muv /mnt/cdrom
+
+●2GB以上のファイル書き込み
+fopenを64bit拡張したfopen64を用いる。そのためには、fopenを使用している
+部分を下記ビルドオプションでビルドする必要がある。
+CFLAGS += -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+
+●日本語入力（Anthy+SCIM)
+①/etc/yum.conf
+proxy=http://proxy.canon.co.jp:10080/
+②
+# yum install anthy scim scim-anthy
+③
+# scif-setup
+全体設定→キーボードにZenkaku-Hankakuを追加
+④
+# scim-restart 
+
+もしくは
+yum groupinstall "Japanese Support"
+「システム」⇒「設定」⇒「入力メソッド」で機能を有効にして再起動（ログアウト）
+
+●システム→ネットワークのプロキシ→自動設定で
+http://pac-server.canon.co.jp/proxy.pac
+
+●yum
+Cannot find a valid baseurl for repo: update
+が出るときは、
+vi /etc/yum.repos.d/CentOS-Base.repo
+#mirrorlist=http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=os
+をコメントアウトし、
+baseurl=http://vault.centos.org/4.9/os/$basearch/
+を追加
+http://d.hatena.ne.jp/tmatsuu/20120324/1332578375
+
+●yum updateが途中で切れてしまったとき
+sudo package-cleanup --cleandupes
+それでもダメなら、
+sudo yum check > hoge
+して、問題になっているモジュールを見つけ、
+　hwdata-0.252-7.8.el7_1.x86_64 is a duplicate with hwdata-0.252-7.3.el7.noarch
+sudo yum remove hwdata-0.252-7.3.el7.noarch
+して、再度
+sudo yum update
+
+参考）http://blog.cloudpack.jp/2014/05/17/serverprotect-for-linux-yum-problem/
+
+●yumコマンド
+yum list installed ：　既にインストールしたソフトウェアの一覧を表示します
+yum list installed | grep ソフトウェア名　：　指定したフトウェアのバージョン名を表示します。
+yum list ：　インストール可能なソフトウェアの一覧を表示します
+yum list updates　：　インストールしたフトウェアでアップデートが必要（できる）一覧です。
+
+●Ubuntuでapt-getするとき
+vi /etc/apt/apt.conf
+Acquire::http::proxy "http://proxy.canon.co.jp:10080/";
+
+【grep】
+●正規表現* は直前の文字の0個以上の繰り返しを意味するため、
+ grep "pthread_*_destroy"ではダメ。
+ grep "pthread_.*_destroy"とすること
+
+●kill -9 `/sbin/pidof SoftBUSMain`（もしくは`pgrep SoftBUSMain`)
+　もしくはpkill SoftBUSMain
+・バックグラウンドで動かしているのを消すには、
+  kill -9 %1
+  # jobs とうつと、job番号が1のはずなので
+
+●拡張子指定して消す
+ rm `find . | grep "\.gcno"`
+●grep OR検索('でも可）
+grep "AAA\|BBB"
+egrep "AAA|BBB" 
+ -> grep -Eでもよい
+
+●Makefile群のなかからマッチする文字列があるファイルを検索
+find -iname 'Makefile' -exec grep -H "TARGET = BOARD" {} \;
+find . -name foo -exec cp /tmp/foo {} \;   #{}が見つかったファイルパス名に置き換わってコマンド実行 \; でコマンド終端
+●複数の拡張子でfind
+find . \( -name \*.c -o -name \*.cpp -o -name \*.h \) -print
+●ファイル名から拡張子を消す
+ls | sed 's/\.[^\.]*$//'
+※basename は一つの引数しか扱わないためsedを使う例
+●ファイルパスからファイル名を取得
+find . -type f | sed 's!^.*/!!'
+
+●pgrep
+-l :プロセス名表示
+●あるディレクトリ名以降を削除
+$(shell echo $(shell pwd) | sed -e 's/\/src\/Job.*//g')
+●マッチしなかった行
+ grep -v
+●ある文字列を含む行の3列目を表示
+grep "FIRMWARE_VERSION" file.c | awk '{ print $$3 }'
+●"loop"がヒットする行を","で分割し4つ目を出す。行を,に変換し一行で出す
+　cat $PERF_LOG | awk -F, '/loop/{print $4;}' | awk -F\n -v ORS=','  '{print}' >> $PERF_CSV
+●awk で最後の行（空白区切り）を表示
+　awk '{print $NF}' <ファイル名>
+●ヘッダファイルから関数名のみを取得
+  grep virtual xjaiPageSpec.h | cut -d'(' -f1 | awk '{print $NF}' > pagespec_funclist.txt
+　get100Gb
+　get100Rg
+　・・・
+●ヒットしたもののなかからヒットしないものを検索
+find . -iname "*.c" | xargs grep -l TODRV_initialize | grep -v test
+●コマンドを指定間隔（秒）で実行
+watch --interval=0.1 "ls | wc -l"
+watch "cat /var/log/ccon.log | grep \"connect recv error\""
+
+
+●コンソールを保存
+script ファイル名
+なんかコマンド
+exit
+で、ファイル名にログが残る
+●dhcpスタート
+ dhcpcd -n -H eth0
+●シンボリックリンクの現在地（ただしbashのpwdのみ。/bin/pwdはこの限りではない)
+$ pwd -L　# シンボリックリンクをたどる
+/usr/tmp 
+$ pwd -P　# シンボリックリンクをたどらない
+/var/tmp 
+
+●スレッドCPU占有率を調べる
+$ ps -eflL | grep nca
+(psコマンドがなかったら\psを試す）
+        ●nca.exe実行時のps
+        [102341@localhost ~]$ \ps -eflL | grep nca
+        0 S 102341   31632 14336 31632  2   52  85   0 - 304662 -     09:25 ?        00:00:00 /project/tachyon/Lab1st/Paris/Tachyon/src/Job/build/PARIS_BOARD/obj/nca.exe
+        1 R 102341   31632 14336 31641 85   52  82   0 - 304662 -     09:25 ?        00:00:02 /project/tachyon/Lab1st/Paris/Tachyon/src/Job/build/PARIS_BOARD/obj/nca.exe★
+        1 S 102341   31632 14336 31642  0   52  77   0 - 304662 -     09:25 ?        00:00:00 /project/tachyon/Lab1st/Paris/Tachyon/src/Job/build/PARIS_BOARD/obj/nca.exe
+        (略）
+
+        ★31641が怪しい？
+
+        ●gdbでのアタッチ
+        [102341@localhost ~]$ gdb
+        （略）
+        (gdb) attach 31853
+        （略）
+        (gdb) bt
+        #0  0x00473402 in __kernel_vsyscall ()
+        #1  0x00e14211 in select () from /lib/libc.so.6
+        #2  0x001a828e in _sbus_select () from /project/tachyon/Lab1st/Paris/Tachyon/src/externallib/softbus/lib/libSoftBUS.so
+        #3  0x001a8599 in _sbus_ex_select () from /project/tachyon/Lab1st/Paris/Tachyon/src/externallib/softbus/lib/libSoftBUS.so
+        #4  0x001abbf6 in tcpSock_selectAll () from /project/tachyon/Lab1st/Paris/Tachyon/src/externallib/softbus/lib/libSoftBUS.so
+        #5  0x001acbab in TCPMux () from /project/tachyon/Lab1st/Paris/Tachyon/src/externallib/softbus/lib/libSoftBUS.so
+        #6  0x00fde49b in start_thread () from /lib/libpthread.so.0
+        #7  0x00e1b42e in clone () from /lib/libc.so.6
+
+●ps -l
+　で親プロセスがPPIDとして出る
+
+●pthread_self()ではpsなどに出るLWP番号はとれない。
+　とりたかったらgettid()する必要あるが、移植性下がる(Linux限定）
+　pthread_selfでとれるのはスタックの底のアドレス？
+
+●gdbでスタックを上にあげる（下げる）
+(gdb) up(down)
+●gdbで全スレッドのbtを見る
+(gdb) thread apply all bt
+森君ツールで、
+./gdb.sh nca.exe
+でもよい。
+●変数監視
+ gdb rwatch mutex
+●16進数で表示
+(gdb) p/x 変数
+●コマンドライン付きgdb実行
+% gdb --args nca.exe -c
+●n回contenueする
+(gdb) c n
+●シグナルを無視する
+プロセス実行フォルダで、
+vi .gdbinit
+handle SIGUSR1 nostop
+handle SIGUSR2 nostop
+handle SIGUSR1 noprint
+handle SIGUSR2 noprint
+●レジスタを見る
+(gdb) info registers
+
+●マクロのなかでブレーク
+ブレークしたいところで
+	#include <signal.h>
+	raise(SIGTRAP);
+してリビルド、gdb実行する
+
+
+●プロセスが使用している（openしている）fdの数を調べる
+ ls /proc/`ps -ef|grep nca.exe|grep -v grep|awk '{print $2}'`/fd | wc -l
+
+●ls一行表示
+ls -1
+●実行ファイル、オブジェクトに含まれる文字列を表示
+strings ***
+
+●IPアドレス固定
+ifconfig eth0 up 192.168.0.1
+
+●gcov/lcov
+1.コンパイル/リンクする際にオプションに
+-fprofile-arcs -ftest-coverage
+をつけると、各ソースファイルのディレクトリに.gcnoファイルが作成される 
+
+2..exeを実行すると
+同じディレクトリに.gcdaファイルが作成される
+gcov test.gcda
+でカバレジ表示
+
+lcov -d . -c -o app.info --base-directory . 
+genhtml -o ./te -p $PWD:h app.info 
+
+lcovは標準で入っていないので、インストールが必要
+http://ltp.sourceforge.net/coverage/lcov.php
+tar xzvf lcov-1.6.tar.gz
+cd lcov-1.6
+make install
+
+●ライブラリや実行ファイルのコンパイラ調べる
+$ objdump.exe -s -j .comment libGeneralFunctionWrapper.so
+
+●ディスク作成
+・10MB のファイルを作成。(ファイル名disk)
+　% dd if=/dev/zero of=disk bs=1M count=10
+・ext3 でファイルシステム作成。
+　% /sbin/mkfs.ext3 -b 4096 -i 8192 disk
+・マウント
+　root@ru:~# mkdir /mnt/hoge
+　root@ru:~# mount -o loop -t ext3 disk /mnt/hoge
+
+●デスクトップの表示
+Ctrl+Alt+d
+
+
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+★★★★★ マシン系 ★★★★★★★★★★★★★★★★★★★
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+●いろいろ調べる
+uname　(-aで全部）
+●CPUinfo調べる
+/proc/cpuinfo
+
+HyperThreading かどうか調べるには、各processorの
+physical
+のIDが同じかどうか調べる（同じだったらHT)
+
+●プロセスの使用メモリやスレッド数等調べる
+cat /proc/15297/status
+VmPeak:  1647852 kB★最大仮想メモリサイズ
+VmSize:  1647852 kB
+VmLck:         0 kB
+VmHWM:     49820 kB
+VmRSS:     49820 kB
+VmData:  1521392 kB★動的仮想メモリ領域のサイズ
+VmStk:        88 kB
+VmExe:      3328 kB★テキスト領域サイズ
+VmLib:      7828 kB
+VmPTE:       316 kB
+StaBrk: 09b8b000 kB
+Brk:    09bcd000 kB
+StaStk: bfc26670 kB
+Threads:        39★
+
+●MEMinfo調べる
+free (-m) (/proc/cpuinfo、meminfoでもよい）
+1.MemFreeが少なくなること自体に問題はない 
+2.freeコマンドは、物理メモリ使用状況を正確に把握するのには向かない 
+3.freeコマンドを使う場合は、ページキャッシュを考慮したused-とfree+を使う 
+4.物理メモリ使用状況の把握にはvmstat -aのActiveとInactiveを使う 
+
+●バージョン調べる
+/etc/redhat-release
+●容量調べる
+du -s -m ./*
+●ファイルシステムチェック
+e2fsck -c(readOnly) -f -p(確認無視) /dev/hda2
+fsck -y /dev/hda2
+●マシンのアーキテクチャの表示
+arch
+●ソケットRCVBUFサイズ（真ん中がデフォルト）
+cat /proc/sys/net/ipv4/tcp_rmem
+
+●ソケット強制close設定
+	struct linger ling;
+	ling.l_onoff = 1;  /* linger active */
+	ling.l_linger = 0; /* 0 seconds to linger for */
+    if ((setsockopt(sd, SOL_SOCKET, SO_LINGER , (const void *)&ling, sizeof(ling))) < 0)
+    {
+        ESRI_ERR_SYSLOG(DEFAULT_JOBID, "server setsockopt(SO_LINGER) error. errno=%d", errno);
+        gfw_close( RIPL_GID, sd );
+        return 0;
+    }
+●ポートをつかんでいるプロセスを見る
+netstat　-ap　|lv
+
+●標準入力をバックグラウンドで獲得
+mkfifo /tmp/keyin
+cat > /tmp/keyin &
+	echo は終了すると fifo に EOF して終了してしまうため、別プロセスでfifoへの入力をONにしておく
+./nca.exe < /tmp/keyin
+ 
+別シェルで、
+echo "mcnt start" > /tmp/keyin
+
+●バックグラウンドのプロセスの終了を待つ
+wait `pgrep nca.exe`
+
+
+●●メモリ系
+●プロセスのメモリマップ
+pmap -x PID
+●メモリスワップ回数、CPU使用率等
+vmstat [監視時間]
+●メモリスワップ量監視
+free -s 監視時間　-m(メガ）
+●ページングやスワッピングを行うデバイスを指定
+swapon
+●プロセスのメモリ使用量調査
+ps -xl --sort -vsize 
+top コマンドを起動してから "M"(大文字) すると消費メモリの順
+free
+でbuffers/cacheのサイズが空き容量
+●有効コア数の設定
+Linuxが立ち上がったら（BOOT後）、何かキーを押すと設定を変えられる。
+ただし、このとき設定した値は保存されない（次回起動時元に戻る）
+元を変えたかったら、rootになって
+/boot/grub/menu.lst 
+を修正する（例えば、maxcpu=8とか）
+
+●Windowsの共有フォルダを見る
+C-CONのファイルブラウザ（Nautilus）で見ることは可能でした。
+ファイル→サーバへ接続→windows共有, ipアドレス設定
+
+●メモリ使用量上位20を5秒ごとに書きだしていくスクリプト
+FILE=hoge.txt
+rm $FILE
+while [ 1 ]
+do
+	date >> $FILE
+	echo "****** free *******" >> $FILE
+	free >>  $FILE
+	echo "****** ps aux *******" >> $FILE
+	ps aux | sort -r -n -k5 | head -n 20 >>  $FILE
+sleep 5
+done
+
+●sort
+-t " " : 空白でセパレートし、
+-k 2.1,2.2 : 2要素目の１文字から2文字目でソート
+Ex.) sort -t "," -k 3.4,3.5 -k 1,1 log
+モジュールでまずソートし、次にtimeでソートする
+time, 1111, mod01, hoge
+time, 1112, mod02, hoge
+
+
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+★★★★★ emacs系 ★★★★★★★★★★★★★★★★★★★
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+●emacs redo
+Ctrl+x u
+
+●バイナリエディタ
+ファイルを開いて、
+Alt+x→hexl-mode
+
+●Tabを空白４つに
+~/.emacsに
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+
+●emacs
+・範囲指定
+　Ctrl+@
+・カット
+　Ctrl+w
+・コピー
+　Esc+w
+・貼り付け
+　Ctrl+y
+・逆に置換
+　Ctrl+r
+・タグジャンプ
+Exc+.
+・すべて選択
+　Ctrl+x h
+
+
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+★★★★★ シェル系 ★★★★★★★★★★★★★★★★★★★
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+●種類
+・interactive/login shell ：system起動時や、virtual terminalに入ったり、sshしたとき。/etc/profileが呼ばれる。~/.bash_profile、~/.bash_loginも呼ばれる
+・interactive/non-login shell ：gnome-terminal。bashと打ったときも。~/.bashrcと/etc/bashrc
+・non-interactive/login shell ：あまりない
+・non-interactive/non-login shell ：jenkinsからはこれ？スクリプトを実行しているシェル（標準入力をうけつけるようなシェルでも、non-interactive）。ユーザは既にログイン済のはずなのでnon-loginが普通。/etc/bash.bashrcか/etc/bashrc。
+　https://unix.stackexchange.com/questions/170493/login-non-login-and-interactive-non-interactive-shells
+  https://askubuntu.com/questions/247738/why-is-etc-profile-not-invoked-for-non-login-shells
+  
+#!/bin/bash -l とシェバンすることで、他から起動されるようなスクリプトでも、ログインシェルとして動作できる（i.e. /ec/profileとかが呼ばれる）
+
+●シェルスクリプト内で実行した cd コマンドをターミナルに反映させたい
+#!/bin/bash
+cd /tmp
+exec /bin/bash
+
+●スクリプト名もログに含める
+bash -x ./***.sh > log.txt
+
+●複数行コメントアウト
+: <<'#__COMMENT_OUT__'
+echo "ここの処理は全て無効になります."
+#__COMMENT_OUT__
+
+●CELPだと、/bin/sh　はbashだが、
+　Ubuntuだと、/bin/sh はdashにaliasされる。
+　ので、/bin/bashと明示しておくこと
+
+●$：Bourne シェル、Bourne Again シェル、Korn シェル
+　%：C シェル、TC シェル、Z シェル
+　#：root
+●set autolistで、tcshでtab補完
+●起動時実行したいファイルは、/etc/rc.d/rc.localに
+●タブ移動
+Alt+数字、Ctrl+Pageup
+●現在のシェル
+echo $SHELL
+●今のシェルの階層
+echo $SHLVL
+
+●シェルのある場所
+script_dir=$(cd $(dirname ${BASH_SOURCE:-$0}); pwd)
+　BASH_SOURCEが定義されていなければ$0を使用
+
+●失敗したら抜ける
+./hoge.exe || exit
+
+●Jenkinsだとgrepなどが失敗するとその場でシェルが終わるので、
+grep hoge file || RET=$?
+とするとよい。RET値で判断する場合は、
+if [ "$RET" = "0" ] ; then
+    hoge
+fi
+などとするとよい
+
+●正規表現マッチ
+if [[ "$STRING" =~ ^ab[cd]$ ]]; then
+	echo "matched"
+else
+	echo "unmatched"
+fi
+つまり正規表現全体を""（ダブルクォート）で囲んではいけないのだ。
+
+●if [[ ${CLEAN_FLAG} -eq 1 ]]; then
+
+●引数取得
+while getopts "c" OPT; do
+  case $OPT in
+    c)
+      echo "--- clean mode ---"
+      CLEAN_FLAG=1
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+
+shift $(expr $OPTIND - 1)
+
+[[ $# -ne 1 ]] && usage
+
+"c"	: 引数なし
+"c:": 引数あり
+	      CPT_CONF_FILE="$OPTARG"
+
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+★★★★★ シグナル系 ★★★★★★★★★★★★★★★★★★★
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+MY> > > MY> 今回のシステムでSIGALRM以外で他に使用してはいけないsignalは
+MY> > > MY> あるでしょうか？
+MY> > > 
+MY> > > ・ユーザが勝手に使えるシグナルとしてSIGUSR1/2があるので、使うときは
+MY> > >   ちゃんと周りを見て使う(プロセス内で他に使っている人がいるか？)
+MY> > >   必要があります。
+MY> > > 
+MY> > > ・gdbを使ってデバッグをする場合、gdbはSIGSTOPとかSIGCONTを投げてくるので、
+MY> > >   gdbデバッグしたければこいつらをマスクしないようにする必要があります。
+MY> > > 
+MY> > > ・fork/execで子プロセスを生成するようなことをするなら、
+MY> > >   子プロセスが死んだときにSIGCHLDが飛んでくるので考慮する必要があります。
+MY> > > 
+MY> > > 一般論として、SIGNALは少し古いメカニズムなので、他の回避手段が
+MY> > > あるならば極力SIGNALを使わない選択をした方が賢明です。
+
+●代替シグナルスタック (Alternate Signal Stack)
+シグナルハンドラ処理はシグナルを補足したスレッドのスタックを利用するため、いざ SEGV 例外が発生した場合には、シグナルハンドラを呼び出すスタックフレームを置くメモリがないということになる。
+この問題に対処するために UNIX 系 OS では 代替シグナルハンドラ (alternate signal stack) の機構を用意している。
+sigaltstack
+
+●printf のフォーマット
+指定子 対応する型 説明 使用例 
+%c char １文字を出力する "%c" 
+%s char * 文字列を出力する "%8s", "%-10s" 
+%d int, short 整数を10進で出力する "%-2d","%03d" 
+%u unsigned int, unsigned short 符号なし整数を10進で出力する "%2u","%02u" 
+%o int, short, 
+unsigned int, unsigned short 整数を8進で出力する "%06o","%03o" 
+%x int, short, 
+unsigned int, unsigned short 整数を16進で出力する "%04x" 
+%f float 実数を出力する "%5.2f" 
+%e float 実数を指数表示で出力する "%5.3e" 
+%g float 実数を最適な形式で出力する "%g" 
+%ld long 倍精度整数を10進で出力する "%-10ld" 
+%lu unsigned long 符号なし倍精度整数を10進で出力する "%10lu" 
+%lo long, unsigned long 倍精度整数を8進で出力する "%12lo" 
+%lx long, unsigned long 倍精度整数を16進で出力する "%08lx" 
+%lf double 倍精度実数を出力する "%8.3lf" 
+%lld long long int
+
+"%*d \n", 6, 523 この場合、フィールド幅を6と指定し、出力値が3桁なので、右側に3つの空白が入ることになる
+-(マイナス) →マイナス符号があるときは、出力を左そろえにします。ないときは、右そろえになります。
+
+printf("%.*s\n",10,"文字列の場合は");
+文字列の場
+このようにアスタリスクに対応する整数型のデータを精度として扱います。
+
+・書式文字列をチェックする。formatが書式文字列の種類(printf、scanf、strftime、strfmonのどれか)で、i番目の引数が書式文字列で、j番目からが可変パラメータ。
+int myprintf(const char* format, ...) __attribute__((format(printf, 1, 2)));
+
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+★★★★★ VMWare系 ★★★★★★★★★★★★★★★★★★★
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+●VMWareToolsのインストール
+下記からisoを用意し、
+http://akihiro-i.net/~akihiro-i/wiki/index.php?VMware%20Tools%A4%CEiso%A5%D5%A5%A1%A5%A4%A5%EB%A4%F2%C6%FE%BC%EA%A4%B9%A4%EB%CA%FD%CB%A1%A1%CA%A5%ED%A1%BC%A5%AB%A5%EB%A4%C7VMware%20Tools%A4%F2%A5%A4%A5%F3%A5%B9%A5%C8%A1%BC%A5%EB%A1%CB
+VMの設定で上記を指定してゲスト再起動
+
+$ cp /media/VMWare-tools-***.tar.gz hoge
+$ cd hoge
+$ tar xvzf VMWare-tools-***.tar.gz
+# vmware-tools-distrib/vmware-install.pl
+
+●イメージをコピーするとMacが同じになるため、Networkが競合する！
+これを回避するために、
+コピーした*.vmxを開き、
+ethernet0.generatedAddress = "00:0c:29:53:7b:ca"
+uuid.bios = "56 4d f7 b6 74 b4 85 b4-e8 cf 7b eb df 53 7b ca"
+の末尾を適当に変えること！
+
+http://www2.chrog.com/members/miya/archives/80
+http://tobysoft.net/wiki/index.php?vmware%2F%A5%A4%A5%E1%A1%BC%A5%B8%A5%D5%A5%A1%A5%A4%A5%EB%A4%F2%A5%B3%A5%D4%A1%BC%A4%B7%A4%BF%A4%E9%A1%A2%A5%CD%A5%C3%A5%C8%A5%EF%A1%BC%A5%AF%A4%AC%B7%D2%A4%AC%A4%E9%A4%CA%A4%AF%A4%CA%A4%C3%A4%BF
+http://www.lancard.com/blog/2010/03/31/vmware-%E3%81%A7-ubuntu-%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8%E3%82%92%E3%82%B3%E3%83%94%E3%83%BC%E3%81%97%E3%81%9F%E3%82%89-nic-%E3%81%8C%E8%A6%8B%E3%81%88%E3%81%AA%E3%81%8F%E3%81%AA%E3%82%8B%E4%BB%B6/
+
+vmxを起動してもeth0が
+Device eth0 has different MAC address than expected, ignoring
+して有効にならないときは、
+vi /etc/sysconfig/network-scripts/ifcfg-eth0
+に設定したMACアドレスを入れる
+そのあと、
+/etc/init.c/network restart
+http://tooljp.com/linux/faq/127F18946D0E8B4349257563005A0C4A.html
+
+
+●Makefile
+例えば、solaris の c プログラムに対する暗黙のルールは以下のとおりです。
+
+.c.o:
+        $(COMPILE.c) $(OUTPUT_OPTION) $<
+.c.a:
+        $(COMPILE.c) -o $% $<
+        $(AR) $(ARFLAGS) $@ $%
+        $(RM) $%
+.c~:
+        $(GET) $(GFLAGS) -p $< > $*.c
+        $(CC) $(CFLAGS) $(LDFLAGS) -o $@ $*.c
+.c:
+        $(LINK.c) -o $@ $< $(LDLIBS)
+
+COMPILE.c= $(CC) $(CFLAGS) $(CPPFLAGS) -c
+LINK.c= $(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS)
+
+・コマンドが失敗すると（例えばgrepに何も引っかからないと）Makeは処理を止めてしまう。
+その際は、
+-grep ***
+とするとError 1 (ignored)と出力して処理継続する
+
+
+●Ubuntu
+・バージョン確認
+cat /etc/lsb_release
+もしくは
+lsb_release -a
+
+・ホスト名確認
+cat /etc/hostname
+ wiki-virtual-machine
+ホスト名変更する場合は/etc/hostsも変更すること
+CentOS7では、
+  /etc/hostname
+  もしくは
+  sudo hostnamectl set-hostname S-2009-P32541
+
+・キーボード変更
+sudo gedit  /etc/default/keyboard
+XKBLAYOUT=”jp,jp”
+して再起動
+
+●samba
+[wiki]
+# tomita added 2013.3.29
+comment = wiki file server of spt11
+path = /home/samba/wiki/repo
+writeable = yes
+force create mode = 0777
+force directory mode = 0777
+guest ok = no
+#wikiユーザのみアクセス可能
+valid users = wiki
+
+・自動起動
+sudo chkconfig smb on
+sudo chkconfig nmb on
+
+・保存するとファイルパーミッションが変わってしまうのを防ぐ
+[global]
+map archive = no
+
+●diff
+・--side-by-side
+  -W COLUMNS, --width=COLUMNS
+        side-by-side 形式で、出力の幅を COLUMNS にする。
+  --left-column
+        side-by-side 形式で、共通な行は左側の列にしか表示しない。
+  --suppress-common-lines
+        side-by-side 形式で共通な行を表示しない。
+・特定の文字列の差分は無視
+  --ignore-matching-lines=".*aipcScan.*Nxp" (-I RE)
+  差分の塊で比較するので、一行ずつ見たい場合は
+  -d  --minimal
+  もつける
+・実行結果のdiffをとる
+diff <(grep hoge hoge1.txt) <(grep hoge hoge2.txt)
+
+●syslog
+・ログ書き込み中に/var/log/messagesをmvすると、mvした先に書き続ける
+（これはsyslogに限った話ではない。Linuxではファイル名でなくinodeに書き続けるため）
+　/var/log/messagesに書かせたい場合は、syslogdにSYGHUP（ハングアップ）シグナルを送る
+  /bin/kill -HUP `cat /var/run/rsyslogd.pid
+
+●lsof
+・CD-ROMがアンマウントできない！！なんで？て時にlsofの出番。
+umount: /media/cdrom0: デバイスを使用中です
+root # lsof /media/cdrom
+
+・listenしてるポートを出力。指定したポートのみ表示することもできる。
+lsof -i           # Listenしてるのずらずら表示
+lsof -i :22       # ポート指定
+lsof -i @192.168.0.1:80 # interfaceとポート指定
+
+・オプション複数指定するとORで出力されるようです。なのでプロセスとユーザの両方を指定したいときは-aをつける。
+lsof -a -u hoge -c java
+
+●Unicode対応（Windows?)
+#include <TCHAR.h>
+を追加し、
+
+g_rirxFontErrorSwitch =	GetPrivateProfileInt(_T("FONT_ENGINE_INFO"), _T("FONT_ERROR_SWITCH"), 1, _T("c:/canon_ij/config/RIRS.ini"));
+（L"ほげ")にすると、ワイド文字＝（Windowsでは）Unicode。_Tマクロは#ifdef UNICODEのときにこれを有効にするマクロ
+
+●エンコード宣言
+/* -*- coding: utf-8 -*- */
+emacs や Ruby や Python はこれを見てエンコードを判断する
+
+
+●Perl
+open(IN, $ARGV[0]) or die("Error");
+
+while(my $line = <IN>){
+  chomp($line);
+  print "$line\n";
+}
+
+close(in);
+
+●プロセス間mutex/cond/sem（共有メモリをmmapする）
+static void pre_init(void)
+{
+
+  /* create named sem */
+  sem = sem_open("sem", O_CREAT|O_RDWR, S_IRWXU|S_IRWXO, 0);
+
+  /* create file */
+  fd = open("hoge", O_RDWR | O_CREAT, 0666);
+  if (fd < 0 ) perror("open");
+  ftruncate(fd, sizeof(ipc_t));
+  ipc = mmap(NULL, sizeof(ipc_t), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+
+  /* mutexのattributeを設定する準備 */
+  pthread_mutexattr_init(&mat);
+  if (pthread_mutexattr_setpshared(&mat, PTHREAD_PROCESS_SHARED) != 0) perror("pthread_mutexattr_setpshared");
+  pthread_condattr_init(&cat);
+  if (pthread_condattr_setpshared(&cat, PTHREAD_PROCESS_SHARED) != 0) perror("pthread_condattr_setpshared");
+}
+static void init(void)
+{
+  /* create mutex and cond */
+  int ret;
+  ret = pthread_mutex_init(&ipc->m, &mat);
+  printf("SERVER:mutex_init: %s\n", strerror(ret));
+  ret = pthread_cond_init(&ipc->c, &cat);
+  printf("SERVER:cond_init: %s\n", strerror(ret));
+}
+
+
+
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+★★★★★ ia32(x86) アセンブラ ★★★★★★★★★★★★★★★★★★★
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+%eax：		レジスタの値
+(%eax)：	レジスタに入っているアドレスの先の値
+0x2b(%ecx)：レジスタの値を2b進める
+call:		指定したアドレスを実行する。このとき、スタックにそのアドレスをpushする（あれば引数も）。
+			ジャンプ先で pop ecx とかすれば、ecx レジスタに PC が入っているというわけ.
+			そして、大域変数へのアクセスのように、相対座標でしかアドレッシングできないような用途のための、
+			ベースアドレスとして使われます
+			(普通はバイナリは PIC なコードで、大域変数(bss, data)とプログラム(text)はメモリの自由なところに貼付けられることになるので、絶対座標ではアドレッシングできない).
+			gcc では、この call & pop で eip を得ることと同等のことを行う
+			__i686.get_pc_thunk という関数が用意されていて、場合によってはこれを呼ぶようになっている.
+			http://syoyo.wordpress.com/2008/09/12/resolved-curious-x86-call-instruction/
+
+TEST EAX,EAX：EAXが0と等しければZF=1,EAXが0でなければZF=0
+JE(JZ)：	ZFが1なら指定したアドレスにジャンプ
+JNE(JNZ)：	ZFが0なら指定したアドレスにジャンプ
+%ebp：		呼び出し元の戻り先アドレス。0(%ebp) が末尾の要素、 -4(%ebp) が次の要素、-8(%ebp) がその次の要素を指す
+%esp：		スタックポインタ、pushすると%esp の値 - 4が指すアドレスにレジスタの値を書きこみ、%esp の値を -4 増やす。 
+
+
+＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃
+＃　白岩さんメモ
+＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃
+## iptagles無効化
+```
+$ sudo service iptables stop
+$ sudo chkconfig iptables off
+$ sudo chkconfig --list iptables
+iptables        0:off   1:off   2:off   3:off   4:off   5:off   6:off
+```
+
+## SELinux無効化
+```
+$ sudo setenforce 0
+$ vi /etc/sysconfig/selinux
+SELINUX=disabled # <= SELINUX=enforcing
+```
+
+## Proxy設定
+
+###環境変数
+    vi /etc/profile.d/proxy.sh
+
+ 記載内容：
+
+    export http_proxy=http://proxy.canon.co.jp:10080
+    export https_proxy=https://proxy.canon.co.jp:10080
+
+### yum
+    vi /etc/yum.conf
+
+記載内容：
+
+    proxy=http://proxy.canon.co.jp:10080
+
+一旦、リブート！
+
+## パッケージ更新
+    sudo yum update
+
+## 開発パッケージをインストールする
+```
+$ sudo yum groupinstall "Development tools"
+```
+
+## 開発パッケージインストール
+    LANG=C yum grouplist
+    yum groupinstall "Development Tools"
+
+### sambaのインストール＆設定
+sudo yum install samba
+sudo pdbedit -a -u shiroiwa
+sudo smbpasswd shiroiwa # 勝手に聞かれる
+sudo vi /etc/samba/smb.conf
+workgroup = MYGROUP
+↓変更
+workgroup = WORKGROUP
+sudo service smb start
+sudo chkconfig smb on
+
+
+●CentOS7
+
+・自動起動
+$ systemclt list-uni-files | grep docker
+docker.service		disabled
+$ systemctl enable docker.service
+$ systemclt list-uni-files | grep docker
+docker.service		enabled
+
+・自動起動（サービス新規追加）
+/etc/systemd/system/*****.serviceを配置してsystemctl daemon-reloadすればサービスに登録されます。
+その後、enable/stop/startなどして status で確認可能
+
+・ネットワークの設定
+nmtui
+or
+nmcli
+
+
+●シェルスクリプト
+
+# $foo に $bar を代入。但し $bar が未定義だった場合は 0 を代入
+foo=${bar:-0}

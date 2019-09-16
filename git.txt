@@ -1,0 +1,386 @@
+●初期設定
+ git config --global user.name "ttomita"
+ git config --global user.email tomita.tatsuhiko@canon.co.jp
+ git config --list
+
+・.gitignore
+ vi ~/.gitignore
+   reftree
+ git config --global core.excludesfile ~/.gitignore
+ もしくは
+ .git/info/exclude に ~/.gitignoreを追記
+
+・config変えたいときはどちらか
+git config --global --unset user.name
+git config --global --edit
+
+-------------------------
+#XPTlite
+reftree
+.config
+*.pinfogen
+
+# Object files
+*.o
+*.d
+
+# Libraries
+*.a
+
+# Eclipse
+.cproject
+.project
+.settings/
+_branchinstlist
+-------------------------
+
+・.gitconfig
+-------------------------
+[user]
+        name = ttomita
+        email = tomita.tatsuhiko@canon.co.jp
+[core]
+        excludesfile = .gitignore
+[alias]
+        st = status --short --branch
+        co = checkout
+        br = branch
+        ci = commit
+        df = diff --color-words --find-copies-harder
+        lg = log --graph --decorate --stat --find-copies-harder
+        modified = diff --stat --diff-filter=M
+        copied   = diff -C30 --stat --diff-filter=C
+        renamed  = diff -M30 --stat --diff-filter=R
+        parent = "!f () { git show-branch | grep '*' | grep -v \"$(git rev-parse --abbrev-ref HEAD)\" | head -1 | awk -F'[]~^[]' '{print $2}'; }; f"
+
+[color]
+        branch = auto
+        diff = auto
+        status = auto
+-------------------------
+        
+もしくは
+git config --global alias.co checkout
+git config --global alias.br branch
+git config --global alias.ci commit
+git config --global alias.st status
+
+
+●基本編
+・status簡易表示
+ git st -s
+ 
+・特定のファイルのみコミット
+ git commit -- file1 file2 file3
+ 
+・全部追加
+ git add .
+ git commit -a
+ でも追加してからコミットできる
+
+・ブランチ作成と同時にckeckout
+  git checkout -b ブランチ名
+  
+・リモートにpush
+  git push origin ブランチ名(Ex. master)
+
+・ローカルの変更をもとに戻す（追加ファイルは削除されない）
+  git checkout .（もしくはファイル名）	
+
+・前のブランチに戻す
+  git checkout -
+  
+・コミットを戻す（変更ファイルはそのまま）
+  git reset --soft 戻したい位置
+  
+・ローカルに追加したファイルを削除（Add前のもの）
+  git clean -f
+  git clean -n で削除前に確認可能
+  
+・addgの取り消し
+  git reset HEAD foo.txt
+
+・ある時点の commit まで戻す（指定したコミット以降の変更もなくなる）
+  git reset --hard 戻りたいこみっと番号
+  
+・git mv の取り消し
+　git reset HEAD 変更後ファイル名
+　git reset HEAD 変更前ファイル名
+　mv 変更後ファイル名 変更前ファイル名でファイル元に戻す
+
+・リモートのブランチにローカルを強制一致させたい時
+ git fetch origin
+ git reset --hard origin/master
+
+・指定したコミットのみを取りやめ（これまでのコミットは消されない）（指定したコミット以降の変更は変わらない）
+  git revert こみっと番号
+・特定のファイルのみ過去のリビジョンに戻す（これまでのコミットは消さない）（指定したコミット以降の変更も戻る）
+  git checkout こみっと番号 ファイル
+・過去に戻すと、detachedという特殊なブランチになる。もとに戻りたい場合は、もとのブランチにcheckoutすること
+
+・特定のブランチをclone
+  git clone -b ***
+
+・ブランチ一覧
+  git branch -r
+  
+・ユーザ名指定してclone
+  git clone http://ttomita@xptgit.***
+  
+・commitしたものをリモートに追加
+  git push origin master
+　
+・git diff
+　はgit add する前のステージに上がっていないものしか対象としないので注意
+　しかも、一度更新したファイルはステージから引きずりおろされるので注意
+
+・git diff --cached
+　でステージに上がったものの差分表示
+
+・git diff --stat <コミットID A> <コミットID B>
+　コミット間の変更ファイル一覧
+
+・リネームも含めてdiffを出す
+  git diff -M
+  rename from
+  rename to などとでる
+
+・変更のあったファイル名だけを取得したい
+git diff --name-status （元のコミット番号）
+M       RELNOTE
+
+・異なるブランチの異なるファイルのdiff
+  git diff color_rfctrg_bwcl_isolate_scan:scan/aipcScanNxp_BW.cxx origin/master:scan/aipcScanNxp.cxx
+
+・異なるコミットリビジョンの異なるファイルをDIFFするには？
+  git diff HEAD\~2:moe.txt HEAD:moemoe.txt
+  
+・特定のパターンのdiffだけみる
+  git diff -G
+
+・外部のdiffツールを使い（Ex.ネイティブdiffやvimdiff)、無視する差分を指定
+  git difftool master --find-renames --diff-filter=R --extcmd="diff --ignore-matching-lines=\"aip\"\|hoge" -y
+  masterとの比較。リネーム検知。aipが付く差分を無視。-y は全てのファイルで比較する
+
+・外部のdiffツールを使い、変更関数だけをリスト化
+  git difftool --extcmd="diff --show-c-function" -y | grep "^\*\*\*\*" | uniq
+
+・ユーザ名とemailの取得
+  git config --get-all user.name
+  git config --get-all user.email
+
+・リモートURLの取得
+  git remote -v
+  git config --list
+  でもよい
+
+・コミット履歴の詳細（ファイル名とか）
+git log -p
+
+・コミットで行ったファイルへの変更内容（変更か追加か、等）を見る
+git log --name-only
+
+・特定のコミットの詳細
+git show commitNum
+
+・マージコミットの詳細
+git diff マージコミット^ マージコミット^2
+
+・他のブランチにrebaseする
+
+git fetch origin            # Updates origin/master
+git rebase origin/ブランチ名    # Rebases current branch onto origin/master
+
+・コミットログの修正（最後のコミット）
+git commit --amend -m "message"
+　TortoiseGitの場合は、最後にコミットしたファイルを選択右クリック→コミットしてから「最後のコミットをやり直し」
+
+・コミットの修正（過去のコミット）
+git stash 	# もし手元で変更していたら
+git rebase -i 修正したいこみっとの直前のコミット
+修正したいこみっとをpickup から edit にして保存
+git stash pop 	# もし手元で変更していたら
+(git add -u)
+git commit *** --amend
+git rebase --continue	# その後のコミットを取り戻す※注意！コミット日付はこれをした日に書き換わる
+git push force origin HEAD:ブランチ名	# リモートにPushしていた場合
+
+・コミットの順序入れ替え
+git rebase -i 修正したいこみっとの直前のコミット
+で、変えたい順序に変更してから保存するだけ
+
+
+・git stash でpopせず変更点だけを見たい
+git stash show -p
+
+・特定ファイルのみstash
+stash しないものだけ git add したのち、
+git stash -k (add前のみstash)
+
+・マージする前に
+git co master
+git pull
+git co branch
+git merge master
+・マージ
+git co master
+git merget branch
+
+・ブランチで、マージ元が進化してなかったら（Fast-Forward状態）マージコミットが生成されない。マージコミットを生成したい場合は
+git merge --no-ff branch 
+
+・マージしてコンフリクトが発生しないかチェックする
+git co ブランチ
+git format-patch master --stdout > test.patch
+git co master
+git apply test.patch
+で、errorが出なければOK
+汚れたのを戻す場合はgit clean -f
+
+・カレントブランチだけを表示する
+git rev-parse --abbrev-ref HEAD
+
+・tag情報も含めて最新にしたい（masterでpullしただけでは最新にならない）
+git fetch --tags
+　タグを指定してCOする場合は、
+git checkout -b tag1.6 refs/tags/1.6
+
+●応用編
+・過去のコミットからコード内の文字列を検索
+git rev-list HEAD | xargs git grep '検索文字列'
+
+ブランチ指定したい場合は、
+git rev-list ブランチ名 | xargs git grep '検索文字列'
+
+・いつ「文字列」を消したか/追加したか検索
+git log -p -S"/// - 反転情報の設定 -" scan/aipcScanNxp_BWCL.cxx
+
+・特定のコミットだけマージ
+ git cherry-pick -n 00000000
+ -nをつけるとaddされない
+ git cherry-pick [始点となるコミット]^..[終点となるコミット]
+ で連続マージも可能。^ で直前のコミットを指定しないと、指定コミットの次のコミットからpickされちゃうので注意
+・ただし、cherry-pick すると別のコミットして取り込んでしまうので、マージできなくなる。マージをする前提であれば（というかこれがほとんどだろう）、mergeするほうがよい。
+　・もし、とびとびのコミットをmergeしたいときは、mergeしたいブランチ側をいじって、mergeしたいコミットを最初にもってきてもらうしかない？？
+・マージコミットのcherry-pick
+  -m 1 を追加
+・コンフリクト解消したら
+  git add -u して、 git cherry-pick --continue
+  
+・merge の dryrun
+$git merge --no-commit --no-ff マージしたいブランチ
+やめたいときは
+$git reset --hard HEAD
+
+ コンフリクト発生したら、
+ git checkout --ours filename 
+ でローカルのファイルに無理やりできる
+ git co --theirs filename
+ でサーバのファイルに無理やりできる
+ 
+・現在のブランチがマージした元を知りたい
+git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -1 | awk -F'[]~^[]' '{print $2}'
+
+・コミットログにburanch名を表示
+git log --graph --oneline --decorate=full
+
+・コミットログにコピー元を表示
+git log -C (もしくは--find-copies-harder) --stat
+	 scan/{aipcScanNxp_BW.cxx => aipcScanNxp_BWCL.cxx} | 0
+	 scan/{aipcScanNxp_BW.h => aipcScanNxp_BWCL.h}     | 0
+
+git log -C (もしくは--find-copies-harder) -p
+	copy from scan/aipcScanNxp_BW.cxx
+	copy to scan/aipcScanNxp_BWCL.cxx
+
+git log -p (もしくは--stat) --follow ファイル名
+
+-Cでもコピーと表示されない場合は、-C40（もしくは--find-copies=40)などとしてsimilarityを下げればマッチするかも
+
+・diff にコピーかどうかを表示
+git diff -C ブランチ名(ex. origin/master)
+
+・ブランチとの差分でリネーム（もしくはコピー）したものだけ表示したい
+git diff --diff-filter=R (もしくはC)  --stat
+	 print/{aipcPrintBW.cxx => aipcPrint_BW.cxx}                      |  254 ++----
+
+・mergeするときに、renameしたものだけでなく、copy先にも反映したい
+マージではなく git rebaseすればできるのでは。
+
+
+・Pullするの忘れてコミットしちゃった。下記のどちらかを行う
+　1. git pull --rebase
+  2. git reset --hard HEAD^（直前のコミット）とかしてコミットを取り消す(その前に変更部を別場所にコピーしておく）
+     git pull
+     変更したのを再度戻してコミット
+
+・過去のコミットとしてコミットしたい
+git commit --fixup=過去のコミット
+　　commitコメントにFixup!とついてコミットされる
+git rebase -i --autosquash 過去のコミット^
+　　過去のコミットまでのすべてのコミットがVimで表示される
+　　Fixup!のところをpickからfixupに修正して保存
+
+・過去のコミットのコメントを変えたい
+git rebase -i 変えたいコミット^
+ エディタが開きます。 
+ コメント修正したいコミットの、pickってなってる部分をedit(eでもOK)に書き換えて保存。
+git commit --amend
+git rebase --continue
+
+・過去のコミットをまとめて一つにしたい
+git rebase -i 
+・revertを複数コミットに対して行いたい
+revertを3回それぞれやってから、
+git rebase -i HEAD~3
+2こめ、3こめのpick をsquash にしてセーブすると一つにまとまる
+http://d.hatena.ne.jp/miau/20100709/1278699637
+
+・Untracked files 以外を index に追加する
+git add -u
+もしくは
+git status | grep 'modified:' | awk '{print $2}' | xargs git add
+git status | grep 'deleted:'  | awk '{print $2}' | xargs git rm --ignore-unmatch
+
+・マージコミットを取りやめたい
+git revert  -m 1 マージコミット
+1は元々のブランチに戻す。2はマージして取り込もうとしていたブランチに戻す
+（注意！）これをやると、再度同じブランチを取り込もうとしてマージを行っても取り込めない。
+　それをやる際にはrevertのrevertをする必要がある
+git revert リバートコミット
+これでマージ済状態に戻る。取り込もうとしていたブランチにさらに変更があった場合は、再度
+git merge ブランチ
+すること
+
+・ファイルパーミッションの変化は無視
+git config core.filemode false
+git config -l | grep filemode
+で確認
+
+・特定のファイル単体で取得
+cloneはできないが、
+gitlab でリポジトリの中のファイルを見た時に Raw というボタンを押したときの URL がファイル単体の URL になっています。 それをwgetなりcurlなり
+wget --no-check-certificate --content-disposition  https://raw.githubusercontent.com/ngyuki/testing/master/README.md
+curl -LJO https://github.com/joyent/node/tarball/v0.7.1
+ただし、.netrcがないとログインページしか取得できなそう
+
+・permission が 644 -> 755 に変わってしまったときなどに戻す（パーミッションのみを変更したものを検知するので、同時に修正が入った場合はgit df で一つずつnew modeとかで検索するしかない
+git diff --numstat | awk '{if (($1 == "0" && $2 == "0") || ($1 == "-" && $2 == "-")) print $3}' | xargs git checkout HEAD
+
+・git、ファイルのモード変更をコミットに反映しないAdd Star
+cygwinだとモードが644->755に突然変わったりして困るので。
+git config core.filemode false
+
+・その行がどのファイルから移動されたか調べる
+git blame -C in addition to -M, detect lines moved or copied from other files that were modified in the same commit.
+git blame -CC look at the commit the file was created in.
+git blame -CCC looks at all your commits.
+
+・現在のコミット番号を知りたい
+git rev-parse --short HEAD
+
+●GitLab
+・Diff
+https://xptgit.cgn.canon.co.jp/pkg-main-image/ipath_cbul3/compare/コミット...master
+
+・最後に?w=1をつけると空白無視

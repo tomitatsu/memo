@@ -1,0 +1,106 @@
+●イメージダウンロード、コンテナ作成、起動（バックグラウンド）
+$ sudo docker run -itd centos:centos6 /bin/bash 
+$ sudo docker run -itd --restart=always --name cpptest --hostname cpptest_guest -p 59222:22 -p 59201:5901 cpptest:latest /usr/sbin/sshd -D
+
+・フォアグラウンドで起動する場合は、-dを外して
+-it
+とする
+
+・ボリューム指定
+-v $PWD:/home/ttomita/volume
+ ゲスト上のオーナーはUid:1000になるので、1000ユーザかrootで触ること
+ さらに、ホスト上で
+ chcon -Rt svirt_sandbox_file_t /path/to/volume
+ としとくこと
+ 
+・コンテナ名、ホスト名
+--name test0001 --hostname host0001
+
+・ポートふぉわーでぃんぐ
+-p 59001:5901
+ホストの59001ポートにアクセスすると、ゲストの5901にいく
+
+・ログインユーザ指定
+ -u ttomita 
+
+●起動して接続
+docker start xptbuild_ttomita
+docker exec -it xptbuild_ttomita /bin/bash
+  ※attach は標準入出力に接続するので、そこに接続できるシェルがない場合は、execを使うこと
+  
+・カレントディレクトの指定（run のように-wがないので）
+docker exec some_container "bash -c cd /opt && hogehoge"
+
+●起動中のコンテナ確認
+sudo docker ps
+docker ps コマンドに -a　オプションをつけると停止したコンテナを確認することができます。
+
+●イメージ確認
+sudo docker images
+docker images コマンドに -a　オプションをつけると停止したコンテナを確認することができます。
+
+● 起動中コンテナへの接続
+sudo docker attach b3f57
+●接続中のコンテナから抜ける
+接続中のコンテナから抜ける場合は、Ctrl ＋ P → Ctrl ＋ Q の順番にキーを押します。
+exitコマンドを入力するとコンテナから切断すると同時に停止します。
+
+● コンテナの起動
+sudo docker start b3f
+
+●イメージの作成、タグ
+sudo docker ps -a
+CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES
+1f0a8f90f4ea centos:centos6 "/bin/bash" 8 minutes ago Exited (0) About a minute ago
+
+sudo docker commit 1f0 centos:web
+（：タグ名）
+
+●イメージのコピー
+sudo docker tag cpptest:latest centos6:build
+※cpptest->centos6
+
+●コンテナの削除
+sudo docker rm ***
+●イメージの削除
+sudo docker rmi ***
+
+●コンテナ名前変更
+docker rename cpptest cpptest2
+
+●docker pull ubuntu したら Get https: dial tcp: lookup index.docker.io on 127.0.1.1:53: no answer from server
+mkdir -p /etc/systemd/system/docker.service.d
+vi /etc/systemd/system/docker.service.d/http-proxy.conf
+[Service]
+Environment="HTTP_PROXY=http://proxy.example.com:80/"
+systemctl daemon-reload
+$ sudo systemctl restart docker
+
+●コンテナがボリュームを使用しているか調べたい
+docker inspect コンテナ名
+で、使用してないと、
+        "Mounts": [],
+使用してると、
+        "Mounts": [
+            {
+                "Type": "bind",
+                "Source": "/home/ttomita",
+                "Destination": "/home/ttomita/volume",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+            }
+
+●コンテナが使用しているデータボリュームを調べたい
+docker inspect -f  "{{range .Mounts}}{{.Name}}{{end}}" コンテナ名
+milkcode_data
+
+●用語
+・Swarm
+　コンテナをクラスタリングする
+
+・DockerEE （Enterprise Edition)
+　商用版
+
+・UCP（Universal Control Plane)
+　コンテナ管理。バックアップもできる。DockerEEでのみ使用？
